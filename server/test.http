@@ -1,0 +1,15 @@
+POST http://localhost:3001/api/card HTTP/1.1
+content-type: application/json
+
+{
+    "name": "Employer starts the task of the day",
+    "desc": "Activity"
+}
+
+###
+
+GET http://localhost:3001/api/cards HTTP/1.1
+
+###
+
+GET http://localhost:3001/api/ping HTTP/1.1

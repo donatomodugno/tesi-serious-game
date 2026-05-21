@@ -1,0 +1,75 @@
+#game-bg {
+    background-image: var(--grad-sfondo);
+    /* height: 100%; */
+    height: 100vh;
+}
+
+.card-hitbox {
+    background-color: transparent;
+    width: 100px; /* 130px; */
+    height: 140px; /* 200px; */
+    perspective: 800px;
+    user-select: none;
+}
+
+.card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    border: 4px solid transparent;
+    border-radius: 13px;
+    transition: transform 0.5s;
+    transform-style: preserve-3d;
+}
+
+.valid:hover {
+    border: 4px solid darkgreen;
+    cursor: pointer;
+}
+
+.invalid:hover {
+    border: 4px solid darkred;
+}
+
+/* .card-hitbox .card { */
+.flipped {
+    transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+}
+
+.card-front {
+    background-color: lightgrey;
+    background-image: url("../assets/card-back.png");
+    background-size: contain;
+    color: black;
+    border-radius: 10px;
+}
+
+.card-back {
+    background-color: white;
+    color: black;
+    font-size: 90%;
+    border-radius: 10px;
+    transform: rotateY(180deg);
+}
+
+.card-back .title {
+    font-size: 130%;
+}
+
+#hud {
+    color: white;
+    /* padding: 10px 0 10px 20px; */
+    padding: 10px;
+}
+
+#hud span {
+    margin-left: 10px;
+}
