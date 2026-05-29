@@ -1,6 +1,5 @@
 #game-bg {
     background-image: var(--grad-sfondo);
-    /* height: 100%; */
     height: 100vh;
 }
 
@@ -65,11 +64,11 @@
 }
 
 #hud {
+    background-image: linear-gradient(#0007, #0004 50%, #0000 90%);
     color: white;
-    /* padding: 10px 0 10px 20px; */
     padding: 10px;
 }
 
 #hud span {
-    margin-left: 10px;
+    margin-left: 20px;
 }

@@ -39,6 +39,7 @@ function Gameboard({}) {
   const [deck, setDeck] = useState([])
   const [coins, setCoins] = useState(0)
   const [buys, setBuys] = useState(1)
+  const [turns, setTurns] = useState(10)
   const [flipped, setFlipped] = useState(false)
 
   function shuffle(arr) {
@@ -72,22 +73,23 @@ function Gameboard({}) {
   }
 
   function buyCard(id) {
-    console.log('deck prima', deck)
+    setBuys(buys-1)
     setDeck(deck => [...deck, cards[id]])
     console.log('carta comprata', id)
-    console.log('deck dopo', deck)
-    setTimeout(() => placeDeck(), 1) // Delay of 1 milliseconds just to render the card animation
+    console.log('carte', ...Object.keys(cards))
+    setTimeout(() => placeDeck(), 1) // Delay of 1 millisecond just to render the card animation
   }
 
   useEffect(() => {
     setCoins(deck.slice(0, 5).map(c => c.value).reduce((sum, n) => sum+n, 0))
   }, [deck])
 
-  return(<>
+  return <>
     <div id="game-bg">
       <div id="hud">
         <span>Coins: {coins}🪙</span>
         <span>Buys: {buys}🔁</span>
+        <span>Turns: {turns}✋🏻</span>
       </div>
       {Object.keys(cards).map((id, k) => <Card
         key={k}
@@ -140,7 +142,7 @@ function Gameboard({}) {
       {/* place */}
       <button onClick={placeDeck}>place</button>
     </div>
-  </>)
+  </>
 }
 
 export default Gameboard

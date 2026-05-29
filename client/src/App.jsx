@@ -2,31 +2,36 @@ import '@mantine/core/styles.css'
 import { MantineProvider, Flex, Box, Stack, TextInput, Checkbox, Button, Title } from '@mantine/core'
 import { useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router'
-import { Gameboard, BPMN, Navbar, BpmnModelerComponent } from './components'
+import { Gameboard, BPMN, Navbar, BpmnModelerComponent, NewGame } from './components'
 import './App.css'
 import API from './API'
 
-function App() {
+function GameView() {
   const SEP = 70
+  return <>
+    <Flex>
+      <Box w={SEP+"%"}>
+        <Gameboard/>
+      </Box>
+      <Box w={100-SEP+"%"}>
+        {/* <BpmnModelerComponent/> */}
+      </Box>
+    </Flex>
+  </>
+}
+
+function App() {
   return(<>
     <MantineProvider>
       <Flex h="100vh" direction={'column'}>
         <Navbar/>
-        <Flex>
-          <Box w={SEP+"%"}>
-            <Gameboard/>
-          </Box>
-          <Box w={100-SEP+"%"}>
-            {/* <BpmnModelerComponent/> */}
-          </Box>
-        </Flex>
+        <Routes>
+          <Route path="/" element={<Navigate to="/gameboard"/>}/>
+          <Route path="/gameboard" element={<GameView/>}/>
+          <Route path="/bpmn" element={<BPMN/>}/>
+          <Route path="/new" element={<NewGame/>}/>
+        </Routes>
       </Flex>
-      {/* <Routes>
-        <Route path="/" render={() => <Navigate to="/gameboard"/>}/>
-        <Route path="/bpmn" element={<BPMN/>}/>
-        <Route path="/gameboard" element={<Gameboard/>}/>
-        <Route path="/modeler" element={<BpmnModelerComponent/>}/>
-      </Routes> */}
     </MantineProvider>
   </>)
 }

@@ -5,7 +5,7 @@ function Navbar({}) {
     const buttons = [
         {path: '/gameboard', text: 'Gameboard'},
         {path: '/bpmn', text: 'BPMN'},
-        {path: '/modeler', text: 'Modeler'},
+        {path: '/new', text: 'New game'},
     ]
 
     return <Flex gap="sm" style={{padding:'10px'}}>

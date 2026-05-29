@@ -1,0 +1,26 @@
+:root {
+    --mant-green: #40C057;
+    --mant-green-dark: #37B24D;
+}
+
+#main-view {
+    padding: 20px
+}
+
+.list-item {
+    cursor: pointer;
+    user-select: none;
+}
+
+.active, .active:hover {
+    background-color: var(--mant-green);
+    color: white;
+}
+
+.trash {
+    padding: 5px;
+}
+
+/* .trash:hover {
+    background-color: var(--mant-green-dark);
+} */
