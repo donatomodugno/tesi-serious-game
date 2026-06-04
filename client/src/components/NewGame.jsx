@@ -1,44 +1,16 @@
 import '@mantine/core/styles.css'
 import './NewGame.css'
+import './Gameboard.css'
 import { Flex, ScrollArea, Table, Modal,
   Title, Text, Space, Button, Fieldset,
   TextInput, Input, InputBase, Slider, ActionIcon,
-  Combobox, useCombobox, TreeSelect } from '@mantine/core'
+  Combobox, useCombobox, Tooltip } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useState, useEffect, useRef } from 'react'
 import { IconDelete, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor } from '../icons'
 
+const panels = ['20%', '40%', '20%']
 const new_card = {title: '<New card>', cost: 1, blocks: [{type: 'task', text: 'First block'}, {type: 'gw-xor'}]}
-// const block_types = [
-//   {value: 'task', name: <Flex align="center" gap="xs">{iconTask} Task</Flex>},
-//   {value: 'task-m', name: <Flex align="center" gap="xs">{iconManual} Manual task</Flex>},
-//   {value: 'task-u', name: <Flex align="center" gap="xs">{iconUser} User task</Flex>},
-//   {value: 'task-s', name: <Flex align="center" gap="xs">{iconService} Service task</Flex>},
-//   {value: 'gw-and', name: <Flex align="center" gap="xs">{iconAnd} Parallel gateway</Flex>},
-//   {value: 'gw-or', name: <Flex align="center" gap="xs">{iconOr} Inclusive gateway</Flex>},
-//   {value: 'gw-xor', name: <Flex align="center" gap="xs">{iconXor} Exclusive gateway</Flex>},
-//   {value: 'ev-msg-s', name: 'Send message'},
-//   {value: 'ev-msg-r', name: 'Receive message'},
-//   {value: 'ev-timer', name: 'Timer/Delay'},
-// ]
-// const data = [
-//   {value: 't', label: 'Tasks', children: [
-//     {value: 'task', label: <Flex align="center" gap="xs">{iconTask} Task</Flex>},
-//     {value: 'task-m', label: <Flex align="center" gap="xs">{iconManual} Manual task</Flex>},
-//     {value: 'task-u', label: <Flex align="center" gap="xs">{iconUser} User task</Flex>},
-//     {value: 'task-s', label: <Flex align="center" gap="xs">{iconService} Service task</Flex>},
-//   ]},
-//   {value: 'g', label: 'Gateways', children: [
-//     {value: 'gw-and', label: <Flex align="center" gap="xs">{iconAnd} Parallel gateway</Flex>},
-//     {value: 'gw-or', label: <Flex align="center" gap="xs">{iconOr} Inclusive gateway</Flex>},
-//     {value: 'gw-xor', label: <Flex align="center" gap="xs">{iconXor} Exclusive gateway</Flex>},
-//   ]},
-//   {value: 'e', label: 'Events', children: [
-//     {value: 'ev-msg-s', label: 'Send message'},
-//     {value: 'ev-msg-r', label: 'Receive message'},
-//     {value: 'ev-timer', label: 'Timer/Delay'},
-//   ]},
-// ]
 const block_types_groups = [
   {group: 'Tasks', children: [
     {value: 'task', label: <Flex align="center" gap="xs">{iconTask} Task</Flex>},
@@ -55,6 +27,10 @@ const block_types_groups = [
     {value: 'ev-msg-s', label: 'Send message'},
     {value: 'ev-msg-r', label: 'Receive message'},
     {value: 'ev-timer', label: 'Timer/Delay'},
+  ]},
+  {group: 'Pools', children: [
+    {value: 'pool', label: 'Pool'},
+    {value: 'lane', label: 'Lane'},
   ]},
 ]
 
@@ -110,9 +86,9 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard}) {
       close={() => setCardToDelete(-1)}
       deleteCard={() => deleteCard(cardToDelete)}
     />
-    <Flex direction="column" gap="lg" w="25%">
+    <Flex direction="column" gap="lg" w={panels[0]} id="list-panel">
       <Button color="green" onClick={() => addCard(new_card)}>Add card</Button>
-      <ScrollArea h="80%">
+      <ScrollArea h="80%" type="always">
         <Table verticalSpacing="sm" striped={false} highlightOnHover withTableBorder={false}>
           <Table.Tbody>
             {cards.map((c, k) => (
@@ -136,25 +112,14 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard}) {
   </>
 }
 
-function EditBlock({block, editBlock, deleteBlock}) {
+function EditBlock({block, editBlock, deleteBlock, allowDelete}) {
   const combobox = useCombobox()
-  // const [value, setValue] = useState(block.type)
-  // const _options = block_types.map(({value, name}) => (
-  //   <Combobox.Option value={value} key={value}>
-  //     {name}
-  //   </Combobox.Option>
-  // ))
   function findLabel(value) {
     for(let g of block_types_groups) {
       for(let c of g.children) {
         if(c.value==value) return c.label
       }
     }
-    // block_types_groups.forEach(g => {
-    //   g.children.forEach(c => {
-    //     if(c.value==value) return c.label
-    //   })
-    // }) // Why won't work with forEach cycles??
     return 'Invalid value'
   }
 
@@ -162,34 +127,24 @@ function EditBlock({block, editBlock, deleteBlock}) {
     legend={
       <Flex justify="space-between">
         Block
-        <ActionIcon variant="default" onClick={deleteBlock}>
-          <IconDelete />
-        </ActionIcon>
+        <Tooltip
+          withArrow
+          label="Cards should have at least one block"
+          events={{hover: !allowDelete}}
+        >
+          <ActionIcon variant="default" onClick={deleteBlock} disabled={!allowDelete}>
+            <IconDelete color={allowDelete ? 'black' : 'grey'} />
+          </ActionIcon>
+        </Tooltip>
       </Flex>
     }
     variant="filled"
     classNames={{legend: 'fieldset-legend'}}
   >
-    {/* <TreeSelect
-      // Molto bello il TreeSelect, ma non posso mostrare nell'input un nodo personalizzato, solo stringhe...
-      label="Block type"
-      // placeholder="Pick a block type"
-      data={data}
-      expandOnClick
-      withLines={false}
-      allowDeselect={false}
-      defaultValue={'task'}
-      value={value}
-      comboboxProps={{
-        // transitionProps: { transition: 'scale-y', duration: 200 },
-      }}
-      onChange={setValue}
-    /> */}
     <Input.Wrapper label="Block type">
       <Combobox
         store={combobox}
         onOptionSubmit={v => {
-          // setValue(v)
           editBlock({...block, type: v})
           combobox.closeDropdown()
         }}
@@ -203,11 +158,6 @@ function EditBlock({block, editBlock, deleteBlock}) {
             rightSectionPointerEvents="none"
             onClick={() => combobox.toggleDropdown()}
           >
-            {/*
-              block_types.find(t => t.value==value)
-              ? block_types.find(t => t.value==value).name
-              : <Input.Placeholder>Pick a block type</Input.Placeholder>
-            */}
             {findLabel(block.type)}
           </InputBase>
         </Combobox.Target>
@@ -222,21 +172,30 @@ function EditBlock({block, editBlock, deleteBlock}) {
                 ))}
               </Combobox.Group>
             ))}
-            {/* {_options} */}
           </Combobox.Options>
         </Combobox.Dropdown>
       </Combobox>
     </Input.Wrapper>
-    {['task', 'task-m', 'task-u', 'task-s'].includes(block.type) && <TextInput
-      label="Task text"
-      placeholder="Insert the task to perform"
+    {['task', 'task-m', 'task-u', 'task-s', 'pool', 'lane'].includes(block.type) && <TextInput
+      label={
+        block.type=='pool'
+        ? 'Pool name'
+        : block.type=='lane'
+          ? 'Lane name'
+          : 'Task text'
+      }
+      placeholder={
+        ['pool', 'lane'].includes(block.type)
+        ? 'Insert the name of the '+block.type
+        : 'Insert the task to perform'
+      }
       value={block.text}
       onChange={({currentTarget: {value}}) => editBlock({...block, text: value})}
     />}
   </Fieldset>
 }
 
-function CardsEditPanel({cards, setCards, activeCard}) {
+function CardEditPanel({cards, setCards, activeCard}) {
   const [inputTitleError, setInputTitleError] = useState(false)
 
   useEffect(() => {
@@ -278,8 +237,8 @@ function CardsEditPanel({cards, setCards, activeCard}) {
   }
 
   return activeCard>=0 && activeCard<cards.length && <>
-    <Flex direction="column" gap="md" w="40%">
-      <Title order={3}>Card: {cards[activeCard].title /* Edit card */}</Title>
+    <Flex direction="column" gap="md" w={panels[1]} id="edit-panel">
+      <Title order={3}>Edit card</Title>
       <ScrollArea h="80%">
         <Flex direction="column" gap="md" id="edit-area">
           <TextInput
@@ -290,6 +249,7 @@ function CardsEditPanel({cards, setCards, activeCard}) {
             onChange={handleTitleChange}
             onBlur={handleTitleBlur}
             pattern="\d*" // Does not work...
+            maxLength="24"
           />
           <Input.Wrapper label="Cost">
             <Slider
@@ -312,6 +272,7 @@ function CardsEditPanel({cards, setCards, activeCard}) {
               block={b}
               editBlock={(nb) => editBlock(k, nb)}
               deleteBlock={() => deleteBlock(k)}
+              allowDelete={cards[activeCard].blocks.length>1}
             />
           ))}
           <Button color="green" onClick={addBlock}>Add block</Button>
@@ -321,15 +282,32 @@ function CardsEditPanel({cards, setCards, activeCard}) {
   </>
 }
 
+function CardPreviewPanel({cards, activeCard}) {
+  return activeCard>=0 && activeCard<cards.length && <>
+    <Flex direction="column" gap="md" w={panels[2]}>
+      <Title order={3}>Card preview</Title>
+      <Flex id="card-preview" direction="column" justify="center" align="center" className="type-bpmn">
+        <span>{cards[activeCard].title}</span>
+        <span>{cards[activeCard].cost+'🪙'}</span>
+      </Flex>
+      {/* <Button onClick={() => console.log(cards)}>log cards</Button> */}
+    </Flex>
+  </>
+}
+
 function NewGame({}) {
   const [cards, setCards] = useState([])
   const [activeCard, setActiveCard] = useState(-1)
 
+  // useEffect(() => {
+  //   APIs...
+  // }, [cards])
+
   return <>
-    <Flex direction="row" h="100%" gap={80} id="main-view">
+    <Flex direction="row" h="100%" gap="60">
       <CardsListPanel cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard} />
-      <CardsEditPanel cards={cards} setCards={setCards} activeCard={activeCard} />
-      <Button onClick={() => console.log(cards)}>cards</Button>
+      <CardEditPanel  cards={cards} setCards={setCards} activeCard={activeCard} />
+      <CardPreviewPanel cards={cards} activeCard={activeCard} />
     </Flex>
   </>
 }

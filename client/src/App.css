@@ -1,9 +1,8 @@
-:root {
-    --verde1: #0F0;
-    --verde2: green;
-    --grad-sfondo: radial-gradient(var(--verde1), var(--verde2));
-}
-
 body {
     margin: 0;
+}
+
+#nav-title {
+    color: black;
+    text-decoration: none;
 }

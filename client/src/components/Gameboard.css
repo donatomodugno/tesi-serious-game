@@ -1,12 +1,22 @@
+:root {
+    --bg1: #0F0;
+    --bg2: green;
+    --grad-bg: radial-gradient(var(--bg1), var(--bg2));
+    --grad-hud: linear-gradient(#0007, #0004 50%, #0000 90%);
+    --card-bpmn: pink;
+    --card-money: #FE8;
+    --card-action: #AFF;
+}
+
 #game-bg {
-    background-image: var(--grad-sfondo);
+    background-image: var(--grad-bg);
     height: 100vh;
 }
 
 .card-hitbox {
     background-color: transparent;
-    width: 100px; /* 130px; */
-    height: 140px; /* 200px; */
+    width: 100px;
+    height: 140px;
     perspective: 800px;
     user-select: none;
 }
@@ -31,19 +41,18 @@
     border: 4px solid darkred;
 }
 
-/* .card-hitbox .card { */
 .flipped {
     transform: rotateY(180deg);
 }
 
-.card-front, .card-back {
+.card-back, .card-front {
     position: absolute;
     width: 100%;
     height: 100%;
     backface-visibility: hidden;
 }
 
-.card-front {
+.card-back {
     background-color: lightgrey;
     background-image: url("../assets/card-back.png");
     background-size: contain;
@@ -51,20 +60,34 @@
     border-radius: 10px;
 }
 
-.card-back {
-    background-color: white;
+.card-front {
     color: black;
     font-size: 90%;
     border-radius: 10px;
     transform: rotateY(180deg);
 }
 
-.card-back .title {
+.card-front .title {
     font-size: 130%;
 }
 
+.type-bpmn {
+    background-color: var(--card-bpmn);
+    background-image: radial-gradient(white 40%, var(--card-bpmn));
+}
+
+.type-money {
+    background-color: var(--card-money);
+    background-image: radial-gradient(white 40%, var(--card-money));
+}
+
+.type-action {
+    background-color: var(--card-action);
+    background-image: radial-gradient(white 40%, var(--card-action));
+}
+
 #hud {
-    background-image: linear-gradient(#0007, #0004 50%, #0000 90%);
+    background-image: var(--grad-hud);
     color: white;
     padding: 10px;
 }
