@@ -212,7 +212,7 @@ function CardEditPanel({cards, setCards, activeCard}) {
     if(value=='') setInputTitleError('Title can\'t be empty')
   }
 
-  const handleCostChange = ({value}) => {
+  const handleCostChange = (value) => {
     const cards_tmp = [...cards]
     cards_tmp[activeCard] = {...cards_tmp[activeCard], cost: value}
     setCards(cards_tmp)
@@ -284,7 +284,8 @@ function CardEditPanel({cards, setCards, activeCard}) {
 
 function CardPreviewPanel({cards, activeCard}) {
   return activeCard>=0 && activeCard<cards.length && <>
-    <Flex direction="column" gap="md" w={panels[2]}>
+    <Flex direction="column" gap="md" w={panels[2]} id="preview-panel">
+      {/* <Space h="xl"/> */}
       <Title order={3}>Card preview</Title>
       <Flex id="card-preview" direction="column" justify="center" align="center" className="type-bpmn">
         <span>{cards[activeCard].title}</span>

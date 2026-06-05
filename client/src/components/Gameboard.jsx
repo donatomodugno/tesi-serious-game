@@ -1,5 +1,5 @@
 import { use, useState, useEffect } from 'react'
-import { Flex } from '@mantine/core'
+import { Flex, Box, Space, Title, Progress, RingProgress, List, ColorSwatch } from '@mantine/core'
 import './Gameboard.css'
 import API from '../API'
 
@@ -7,56 +7,46 @@ const cards = {
   'V1': {y: 100, x: 200, type: 'bpmn', cost: 3, value: 1, title: '1 🧩'},
   'V3': {y: 100, x: 300, type: 'bpmn', cost: 5, value: 3, title: '3 🧩'},
   'V6': {y: 100, x: 400, type: 'bpmn', cost: 8, value: 6, title: '6 🧩'},
-  'M1': {y: 100, x: 500, type: 'money', cost: 0, value: 1, title: '1 🪙'},
-  'M2': {y: 100, x: 600, type: 'money', cost: 1, value: 2, title: '2 🪙'},
-  'M3': {y: 100, x: 700, type: 'money', cost: 2, value: 3, title: '3 🪙'},
-  'A1': {y: 260, x: 200, type: 'action', cost: 3, value: 0, title: 'Draw a card'},
-  'A2': {y: 260, x: 300, type: 'action', cost: 5, value: 0, title: 'Draw two cards'},
-  'A3': {y: 260, x: 400, type: 'action', cost: 7, value: 0, title: 'Draw three cards'},
-  'A4': {y: 260, x: 500, type: 'action', cost: 7, value: 2, title: 'Do a thing'},
-  'A5': {y: 260, x: 600, type: 'action', cost: 7, value: 2, title: 'Do another thing'},
+  'M1': {y: 100, x: 500, type: 'money', cost: 0, bonus: 1, title: '1 🪙'},
+  'M2': {y: 100, x: 600, type: 'money', cost: 1, bonus: 2, title: '2 🪙'},
+  'M3': {y: 100, x: 700, type: 'money', cost: 2, bonus: 3, title: '3 🪙'},
+  'A1': {y: 260, x: 200, type: 'action', cost: 2, bonus: +0, title: <>+1 🃏</>},
+  'A2': {y: 260, x: 300, type: 'action', cost: 3, bonus: +0, title: <>+2 🃏</>},
+  'A3': {y: 260, x: 400, type: 'action', cost: 5, bonus: +0, title: <>+1 🃏<br/>+1 🛒</>},
+  'A4': {y: 260, x: 500, type: 'action', cost: 6, bonus: +2, title: <>+1 🃏</>},
+  'A5': {y: 260, x: 600, type: 'action', cost: 6, bonus: +2, title: <>+1 🛒</>},
+  'A6': {y: 260, x: 600, type: 'action', cost: 5, bonus: -2, title: <>+1 ✋🏻</>},
+  'A7': {y: 260, x: 400, type: 'action', cost: 7, bonus: +2, title: <>+2 🛒</>},
 }
 
-// function _Card({y, x, z=0, title, cost, value, flipped, valid, clickable, task}) {
-//   return <div className="card-hitbox" style={{
-//     position:'absolute',
-//     top: y,
-//     left: x,
-//     zIndex: z,
-//     visibility: 'visible',
-//     transition: '0.5s',
-//   }} onClick={clickable && valid ? task : () => {}}>
-//     <div className={'card' + (flipped ? ' flipped' : '') + (clickable ? valid ? ' valid' : ' invalid' : '')}>
-//       <div className="card-front"></div>
-//       <div className="card-back">
-//         <span className="title">{title}<br/></span>
-//         {'[+'+value+']'}<br/>
-//         ({cost}🪙)
-//       </div>
-//     </div>
-//   </div>
-// }
-
-function Card({card, x=card.x, y=card.y, z=0, task=()=>{}, flipped, clickable, valid}) {
+function Card({card, x=card.x, y=card.y, z=0, task=()=>{}, flipped=false, clickable, valid, showCost=true}) {
   return <div className="card-hitbox" style={{
     position: 'absolute',
     top: y,
     left: x,
     zIndex: z,
-    transition: '0.5s',
+    transition: '0.8s',
   }} onClick={clickable && valid ? task : () => {}}>
     <div className={'card' + (flipped ? ' flipped' : '') + (clickable ? valid ? ' valid' : ' invalid' : '')}>
       <Flex className="card-back"></Flex>
-      <Flex className={'card-front type-'+card.type} direction="column">
+      <Flex className={'card-front type-'+card.type} direction="column" justify="space-between">
         <span className="title">{card.title}</span>
-        <span>{'[+'+card.value+']'}</span>
-        <span>({card.cost}🪙)</span>
+        <span>{card.text}</span>
+        {card.type=='action' && (
+          card.bonus>=0
+          ? <span className="bonus">[+{card.bonus}🪙]</span>
+          : <span className="malus">[{card.bonus}🪙]</span>
+        )}
+        <Space/>
+        {showCost && <span>(cost: {card.cost}🪙)</span>}
       </Flex>
     </div>
   </div>
 }
 
-function Gameboard({}) {
+// function Legend() {}
+
+function GameView({}) {
   const [deck, setDeck] = useState([])
   const [coins, setCoins] = useState(0)
   const [buys, setBuys] = useState(1)
@@ -81,8 +71,11 @@ function Gameboard({}) {
     deckStart.push(cards['V1'])
     deckStart.push(cards['A1'])
     deckStart.push(cards['A2'])
-    setDeck(shuffle(deckStart))
+    setDeck(deckStart)
+    shuffleDeck()
     placeDeck()
+    setBuys(1)
+    setTurns(10)
   }
   
   useEffect(() => {
@@ -93,100 +86,132 @@ function Gameboard({}) {
     setDeck(deck => deck.map(c => ({...c, y: 500, x: 50})))
   }
 
+  function shuffleDeck() {
+    setDeck(deck => shuffle(deck))
+  }
+
   function buyCard(id) {
-    setBuys(buys-1)
-    setDeck(deck => [...deck, cards[id]])
-    console.log('carta comprata', id)
-    console.log('carte', ...Object.keys(cards))
-    setTimeout(() => placeDeck(), 1) // Delay of 1 millisecond just to render the card animation
+    if(buys>0) {
+      setBuys(buys-1)
+      setCoins(coins-cards[id].cost)
+      setDeck(deck => [...deck, cards[id]])
+      console.log('carta comprata', id)
+      console.log('carte', ...Object.keys(cards))
+      setTimeout(() => placeDeck(), 1) // Delay of 1 millisecond just to render the card animation
+    }
   }
 
   useEffect(() => {
-    setCoins(deck.slice(0, 5).map(c => c.value).reduce((sum, n) => sum+n, 0))
+    setCoins(deck.slice(0, 5).map(c => (c.bonus || 0)).reduce((sum, n) => sum+n, 0))
   }, [deck])
+
+  useEffect(() => {
+    if(buys==0) {
+      setBuys(1)
+      setTurns(turns-1)
+    }
+  }, [buys])
+
+  useEffect(() => {
+    shuffleDeck()
+    setCoins(deck.slice(0, 5).map(c => (c.bonus || 0)).reduce((sum, n) => sum+n, 0))
+    if(turns==0) {
+      alert('Game finished!')
+    }
+  }, [turns])
 
   return <>
     <div id="game-bg">
       <div id="hud">
         <span>Coins: {coins}🪙</span>
-        <span>Buys: {buys}🔁</span>
+        <span>Buys: {buys}🛒</span>
         <span>Turns: {turns}✋🏻</span>
       </div>
-      {/* {Object.keys(cards).map((id, k) => <Card
-        key={k}
-        y={cards[id].y}
-        x={cards[id].x}
-        z={2}
-        title={cards[id].title}
-        cost={cards[id].cost}
-        value={cards[id].value}
-        flipped
-        clickable
-        valid={cards[id].cost<=coins}
-        task={() => buyCard(id)}
-      />)} */}
       {Object.keys(cards).map((id, k) => <Card
         key={k}
         card={cards[id]}
-        z={2}
-        flipped
         clickable
         valid={cards[id].cost<=coins}
         task={() => buyCard(id)}
       />)}
-      {/* {deck.slice(0, 5).map((c, i) => <Card
-        key={i}
-        y={500}
-        x={200+i*100}
-        title={c.title}
-        cost={c.cost}
-        value={c.value}
-        flipped
-      />)} */}
       {deck.slice(0, 5).map((c, i) => <Card
         key={i}
         card={c}
         y={500}
         x={200+i*100}
-        flipped
-      />)}
-      {/* {deck.slice(5).map((c, i) => <Card
-        key={i}
-        y={c.y}//{500}
-        x={c.x}//{50}
-        z={2}
-        title={c.title}
-        cost={c.cost}
-        value={c.value}
         clickable
-        flipped={c.y!=500 && c.x!=50}
-        valid={c.cost<=coins}
-      />)} */}
+        showCost={false}
+      />)}
       {deck.slice(5).map((c, i) => <Card
         key={i}
         card={c}
         z={2}
-        clickable
-        flipped={c.y!=500 && c.x!=50}
+        flipped={c.y==500 && c.x==50}
         valid={c.cost<=coins}
       />)}
       {/* log */}
-      <button onClick={() => {
+      {/* <button onClick={() => {
         console.log('cards', cards)
         console.log('coins:', deck.slice(0, 5).map(c => c.value).reduce((sum, n) => sum+n))
         console.log('deck', deck)
-      }}>log</button>
+      }}>log</button> */}
       {/* shuffle */}
-      <button onClick={() => {
+      {/* <button onClick={() => {
         setDeck(shuffle([...deck]))
-      }}>shuffle</button>
+      }}>shuffle</button> */}
       {/* reset */}
-      <button onClick={() => {
+      {/* <button onClick={() => {
         initDeck()
-      }}>reset</button>
+      }}>reset</button> */}
       {/* place */}
-      <button onClick={placeDeck}>place</button>
+      {/* <button onClick={placeDeck}>place</button> */}
+      <Flex id="legend" direction="column" w="170" gap="lg">
+        <Title order={4} ta="center">Legend</Title>
+        <span>&nbsp;+N 🃏<br/>Draw N cards</span>
+        <span>&nbsp;+N 🛒<br/>Add N buys in a turn</span>
+        <span>&nbsp;+N ✋🏻<br/>Add N turns</span>
+      </Flex>
     </div>
+  </>
+}
+
+function ProgressPanel({progress=50}) {
+  return <Flex id="panel" h="100%" direction="column" gap="md">
+    <Title size="md" order={3}>Your progress</Title>
+    <Progress.Root size="30">
+      <Progress.Section value={progress} color="green">
+        <Progress.Label>{progress}%</Progress.Label>
+      </Progress.Section>
+    </Progress.Root>
+    <Space h="xl"/>
+    <Title size="md" order={3}>Deck composition</Title>
+    <RingProgress
+      label={<Title ta="center">🃏</Title>}
+      sections={[
+        { value: 40, color: '#1AB' },
+        { value: 15, color: '#FC0' },
+        { value: 15, color: '#D48' },
+      ]}
+    />
+    <List>
+      <List.Item icon={<ColorSwatch color="#1AB" size={16}/>}>Actions</List.Item>
+      <List.Item icon={<ColorSwatch color="#FC0" size={16}/>}>Money</List.Item>
+      <List.Item icon={<ColorSwatch color="#D48" size={16}/>}>BPMN elements</List.Item>
+    </List>
+  </Flex>
+}
+
+function Gameboard({}) {
+  const SEP = 80 // 70
+  return <>
+    <Flex>
+      <Box w={SEP+"%"}>
+        <GameView/>
+      </Box>
+      <Box w={100-SEP+"%"}>
+        <ProgressPanel/>
+      </Box>
+    </Flex>
   </>
 }
 

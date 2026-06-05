@@ -23,7 +23,7 @@
     padding: 5px;
 }
 
-#edit-panel {
+#edit-panel, #preview-panel {
     padding: 10px;
 }
 

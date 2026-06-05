@@ -1,9 +1,11 @@
 :root {
     --bg1: #0F0;
     --bg2: green;
-    --grad-bg: radial-gradient(var(--bg1), var(--bg2));
+    --grad-bg:
+        radial-gradient(circle, #0000 20%, #0001 20% 30%, #0000 30%),
+        radial-gradient(var(--bg1), var(--bg2));
     --grad-hud: linear-gradient(#0007, #0004 50%, #0000 90%);
-    --card-bpmn: pink;
+    --card-bpmn: #FBC; /* #FFC0CB; */ /* pink;*/
     --card-money: #FE8;
     --card-action: #AFF;
 }
@@ -50,25 +52,34 @@
     width: 100%;
     height: 100%;
     backface-visibility: hidden;
+    border-radius: 10px;
 }
 
 .card-back {
-    background-color: lightgrey;
-    background-image: url("../assets/card-back.png");
     background-size: contain;
+    background-image: url("../assets/card-back.png");
+    background-color: grey;
     color: black;
-    border-radius: 10px;
+    transform: rotateY(180deg);
+    z-index: 1;
 }
 
 .card-front {
+    background-color: white;
     color: black;
     font-size: 90%;
-    border-radius: 10px;
-    transform: rotateY(180deg);
 }
 
 .card-front .title {
     font-size: 130%;
+}
+
+.card-front .bonus {
+    color: green;
+}
+
+.card-front .malus {
+    color: red;
 }
 
 .type-bpmn {
@@ -94,4 +105,17 @@
 
 #hud span {
     margin-left: 20px;
+    /* font-weight: bold; */
+}
+
+#legend {
+    background-color: #0003;
+    color: white;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+#panel {
+    padding: 40px;
 }
