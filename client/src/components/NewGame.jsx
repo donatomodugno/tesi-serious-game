@@ -86,7 +86,7 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard}) {
       close={() => setCardToDelete(-1)}
       deleteCard={() => deleteCard(cardToDelete)}
     />
-    <Flex direction="column" gap="lg" w={panels[0]} id="list-panel">
+    <Flex id="list-panel" direction="column" gap="lg" w={panels[0]} h="100%">
       <Button color="green" onClick={() => addCard(new_card)}>Add card</Button>
       <ScrollArea h="80%" type="always">
         <Table verticalSpacing="sm" striped={false} highlightOnHover withTableBorder={false}>

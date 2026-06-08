@@ -4,7 +4,7 @@ import { Link } from 'react-router'
 function Navbar({}) {
     const buttons = [
         {path: '/gameboard', text: 'Gameboard'},
-        {path: '/bpmn', text: 'BPMN'},
+        // {path: '/bpmn', text: 'BPMN'},
         {path: '/new', text: 'New game'},
     ]
 

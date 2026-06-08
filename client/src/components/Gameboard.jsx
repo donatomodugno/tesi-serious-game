@@ -1,5 +1,5 @@
 import { use, useState, useEffect } from 'react'
-import { Flex, Box, Space, Title, Progress, RingProgress, List, ColorSwatch } from '@mantine/core'
+import { Flex, Box, Space, Title, Progress, RingProgress, List, ColorSwatch, Modal } from '@mantine/core'
 import './Gameboard.css'
 import API from '../API'
 
@@ -43,8 +43,6 @@ function Card({card, x=card.x, y=card.y, z=0, task=()=>{}, flipped=false, clicka
     </div>
   </div>
 }
-
-// function Legend() {}
 
 function GameView({}) {
   const [deck, setDeck] = useState([])
@@ -204,7 +202,8 @@ function ProgressPanel({progress=50}) {
 function Gameboard({}) {
   const SEP = 80 // 70
   return <>
-    <Flex>
+    <Modal opened={false} overlayProps={{backgroundOpacity:0.55,blur:3}}>Game finished!</Modal>
+    <Flex h="100%">
       <Box w={SEP+"%"}>
         <GameView/>
       </Box>
