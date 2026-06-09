@@ -1,4 +1,5 @@
 import { use, useState, useEffect } from 'react'
+import { useParams } from 'react-router'
 import { Flex, Box, Space, Title, Progress, RingProgress, List, ColorSwatch, Modal } from '@mantine/core'
 import './Gameboard.css'
 import API from '../API'
@@ -174,7 +175,9 @@ function GameView({}) {
 }
 
 function ProgressPanel({progress=50}) {
+  const {id} = useParams()
   return <Flex id="panel" h="100%" direction="column" gap="md">
+    <Title order={3}>Exercise: {id}</Title>
     <Title size="md" order={3}>Your progress</Title>
     <Progress.Root size="30">
       <Progress.Section value={progress} color="green">

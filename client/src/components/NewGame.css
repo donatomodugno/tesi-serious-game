@@ -23,8 +23,9 @@
     padding: 5px;
 }
 
-#edit-panel, #preview-panel {
+#edit-panel, #preview-panel, #settings-panel {
     padding: 10px;
+    margin-top: 10px;
 }
 
 #edit-area {

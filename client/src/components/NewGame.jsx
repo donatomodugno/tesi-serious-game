@@ -7,7 +7,9 @@ import { Flex, ScrollArea, Table, Modal,
   Combobox, useCombobox, Tooltip } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useState, useEffect, useRef } from 'react'
-import { IconDelete, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor } from '../icons'
+import { Icon, IconDelete, IconLogout, IconBack,
+  iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor } from '../icons'
+import API from '../API'
 
 const panels = ['20%', '40%', '20%']
 const new_card = {title: '<New card>', cost: 1, blocks: [{type: 'task', text: 'First block'}, {type: 'gw-xor'}]}
@@ -88,13 +90,13 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard}) {
     />
     <Flex id="list-panel" direction="column" gap="lg" w={panels[0]} h="100%">
       <Button color="green" onClick={() => addCard(new_card)}>Add card</Button>
-      <ScrollArea h="80%" type="always">
+      <ScrollArea.Autosize h="100%" mah={'100%'} type="always" scrollbars="y" offsetScrollbars="present">
         <Table verticalSpacing="sm" striped={false} highlightOnHover withTableBorder={false}>
           <Table.Tbody>
             {cards.map((c, k) => (
               <Table.Tr
                 key={k}
-                onClick={() => setActiveCard(k)}
+                onClick={() => setActiveCard(k)}//() => k==activeCard ? setActiveCard(-1) : setActiveCard(k)
                 className={'list-item' + (k==activeCard ? ' active' : '')}
               >
                 <Table.Td>{c.title || (activeCard!=k && '<Untitled card>')}&nbsp;</Table.Td>
@@ -107,7 +109,7 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard}) {
             ))}
           </Table.Tbody>
         </Table>
-      </ScrollArea>
+      </ScrollArea.Autosize>
     </Flex>
   </>
 }
@@ -195,7 +197,7 @@ function EditBlock({block, editBlock, deleteBlock, allowDelete}) {
   </Fieldset>
 }
 
-function CardEditPanel({cards, setCards, activeCard}) {
+function CardEditPanel({cards, setCards, activeCard, setActiveCard}) {
   const [inputTitleError, setInputTitleError] = useState(false)
 
   useEffect(() => {
@@ -238,7 +240,16 @@ function CardEditPanel({cards, setCards, activeCard}) {
 
   return activeCard>=0 && activeCard<cards.length && <>
     <Flex direction="column" gap="md" w={panels[1]} id="edit-panel">
-      <Title order={3}>Edit card</Title>
+      <Title order={3}>
+        <Flex align="center" gap="sm">
+          <Tooltip label="Go back to settings">
+            <ActionIcon variant="outline" color="black" onClick={() => setActiveCard(-1)}>
+              <Icon.Back/>
+            </ActionIcon>
+          </Tooltip>
+          Edit card
+        </Flex>
+      </Title>
       <ScrollArea h="80%">
         <Flex direction="column" gap="md" id="edit-area">
           <TextInput
@@ -283,6 +294,11 @@ function CardEditPanel({cards, setCards, activeCard}) {
 }
 
 function CardPreviewPanel({cards, activeCard}) {
+
+  useEffect(() => {
+    API.ping()
+  }, [])
+  
   return activeCard>=0 && activeCard<cards.length && <>
     <Flex direction="column" gap="md" w={panels[2]} id="preview-panel">
       {/* <Space h="xl"/> */}
@@ -296,6 +312,25 @@ function CardPreviewPanel({cards, activeCard}) {
   </>
 }
 
+function SettingsPanel({cards, activeCard}) {
+  const [settings, setSettings] = useState({title:'<New exercise>'})
+
+  return (activeCard<0 || activeCard>=cards.length) && <>
+    <Flex direction="column" gap="md" w={panels[1]} id="settings-panel">
+      <Title>{settings.title || '<New exercise>'}</Title>
+      <Title order={3}>Exercise settings</Title>
+      <TextInput
+        label="Title"
+        placeholder="Insert exercise title here"
+        value={settings.title}
+        onChange={({currentTarget:{value}}) => {setSettings({...settings, title: value})}}
+        maxLength="24"
+      />
+      N. of cards: {cards.length}
+    </Flex>
+  </>
+}
+
 function NewGame({}) {
   const [cards, setCards] = useState([])
   const [activeCard, setActiveCard] = useState(-1)
@@ -305,10 +340,11 @@ function NewGame({}) {
   // }, [cards])
 
   return <>
-    <Flex direction="row" h="100%" gap="60">
-      <CardsListPanel cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard} />
-      <CardEditPanel  cards={cards} setCards={setCards} activeCard={activeCard} />
-      <CardPreviewPanel cards={cards} activeCard={activeCard} />
+    <Flex direction="row" h="90%" gap="60">
+      <CardsListPanel cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}/>
+      <CardEditPanel  cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}/>
+      <CardPreviewPanel cards={cards} activeCard={activeCard}/>
+      <SettingsPanel cards={cards} activeCard={activeCard}/>
     </Flex>
   </>
 }

@@ -7,6 +7,26 @@ function IconDelete({color='black'}) {
     </>
 }
 
+function IconLogout({color='black'}) {
+    return <>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 3H6a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h4M16 17l5-5-5-5M19.8 12H9"/>
+        </svg>
+    </>
+}
+
+function IconBack({color='black'}) {
+    return <>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier">
+            <path d="M4 10L3.29289 10.7071L2.58579 10L3.29289 9.29289L4 10ZM21 18C21 18.5523 20.5523 19 20 19C19.4477 19 19 18.5523 19 18L21 18ZM8.29289 15.7071L3.29289 10.7071L4.70711 9.29289L9.70711 14.2929L8.29289 15.7071ZM3.29289 9.29289L8.29289 4.29289L9.70711 5.70711L4.70711 10.7071L3.29289 9.29289ZM4 9L14 9L14 11L4 11L4 9ZM21 16L21 18L19 18L19 16L21 16ZM14 9C17.866 9 21 12.134 21 16L19 16C19 13.2386 16.7614 11 14 11L14 9Z" fill={color}></path> </g>
+        </svg>
+    </>
+}
+
+const Icon = ({children}) => <>{children}</>
+Icon.Logout = IconLogout
+Icon.Back = IconBack
+
 const iconTask = <>
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="-40 0 2000 2000"><rect width="17.563" height="14.478" x="1.23" y="1035.052" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.034" rx="2.759" transform="translate(55.328 -99820.702)scale(96.7529)"/></svg>
 </>
@@ -37,4 +57,4 @@ const iconXor = <>
     </svg>
 </>
 
-export { IconDelete, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor }
+export { Icon, IconDelete, IconLogout, IconBack, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor }
