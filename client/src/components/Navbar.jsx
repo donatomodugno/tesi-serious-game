@@ -20,8 +20,8 @@ function Navbar({logged=true}) {
             </Link>
         ))}
         {logged ? <Button.Group>
-            <Button variant="filled" color="green">Loggedin as tiziocaio</Button>
-            <Button variant="light" color="green" rightSection={<Icon.Logout color="green"/>}>Logout</Button>
+            <Button variant="light" color="green">Loggedin as tiziocaio</Button>
+            <Button variant="filled" color="green" rightSection={<Icon.Logout color="white"/>}>Logout</Button>
         </Button.Group>
         : <Button variant="light" color="green">Login</Button>}
     </Flex>

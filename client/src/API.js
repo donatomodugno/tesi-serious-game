@@ -49,4 +49,9 @@ API.card = async (card) => {
     console.log(res)
 }
 
+API.saveExercise = async (ex) => {
+    const res = await post('/api/exercise', ex)
+    console.log(res)
+}
+
 export default {...API}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { Flex, Box, Title, Text, Button, ScrollArea, Space } from '@mantine/core'
 import API from '../API'
@@ -7,22 +7,29 @@ function Exercises({logged=true}) {
     const [exercises, setExercises] = useState([
         'Car rental',
         'Hotel reservations',
-        'Car rental',
-        'Hotel reservations',
+        'Water company',
+        'Parking station',
         'Car rental',
         'Hotel reservations',
     ])
+
+    useEffect(() => {
+        API.ping()
+    }, [])
 
     return <>
         <Flex h="90%" justify="flex-start" gap="sm" direction="column" align="center">
             <Space h="xl"/>
             <Title>BPMN BattleCards</Title>
-            <Title order={3}>Choose an exercise</Title>
-            <ScrollArea.Autosize h="70%" w="80%" type="always" scrollbars="y" style={{borderBottom:'1px solid lightgrey'}}>
+            <Title order={3}>Choose an exercise {logged && <>
+                or <Link to="/edit"><Button color="green">Create a new exercise</Button></Link>
+            </>}</Title>
+            <ScrollArea.Autosize h="70%" w="80%" type="always" scrollbars="y" id="exercises-list">
                 {exercises.map((e, k) => <Flex
                     key={k}
                     w="95%" // Wanted to achieve this using "offsetScrollbars" but it wasn't working properly
-                    style={{margin:'20px', padding:'20px', boxShadow: '2px 2px 5px 2px lightgrey', borderRadius:'20px'}}
+                    // style={{margin:'20px', padding:'20px', boxShadow: '2px 2px 5px 2px lightgrey', borderRadius:'20px'}}
+                    className="exercise-item"
                     align="center"
                     justify="space-between"
                 >

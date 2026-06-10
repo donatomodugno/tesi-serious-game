@@ -24,6 +24,7 @@ function IconBack({color='black'}) {
 }
 
 const Icon = ({children}) => <>{children}</>
+Icon.Delete = IconDelete
 Icon.Logout = IconLogout
 Icon.Back = IconBack
 
@@ -57,4 +58,4 @@ const iconXor = <>
     </svg>
 </>
 
-export { Icon, IconDelete, IconLogout, IconBack, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor }
+export { Icon, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor }

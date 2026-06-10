@@ -2,7 +2,7 @@ import '@mantine/core/styles.css'
 import { MantineProvider, Flex, Box, Stack, TextInput, Checkbox, Button, Title } from '@mantine/core'
 import { useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router'
-import { Gameboard, Navbar, NewGame, Exercises } from './components'
+import { Navbar, Exercises, Gameboard, NewGame } from './components'
 import './App.css'
 import API from './API'
 

@@ -7,8 +7,7 @@ import { Flex, ScrollArea, Table, Modal,
   Combobox, useCombobox, Tooltip } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useState, useEffect, useRef } from 'react'
-import { Icon, IconDelete, IconLogout, IconBack,
-  iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor } from '../icons'
+import { Icon, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor } from '../icons'
 import API from '../API'
 
 const panels = ['20%', '40%', '20%']
@@ -42,7 +41,7 @@ function ModalDelete({opened, close, deleteCard}) {
     onClose={close}
     title={
       <Flex align="center" gap="sm">
-        <IconDelete color="red"/>
+        <Icon.Delete color="red"/>
         <Text span fw="700"> Delete card</Text>
       </Flex>
     }
@@ -102,7 +101,7 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard}) {
                 <Table.Td>{c.title || (activeCard!=k && '<Untitled card>')}&nbsp;</Table.Td>
                 <Table.Td w="0" className="trash">
                   {k==activeCard && <ActionIcon size="lg" color="green" visibility="hidden" onClick={() => setCardToDelete(k)}>
-                    <IconDelete color="white" />
+                    <Icon.Delete color="white" />
                   </ActionIcon>}
                 </Table.Td>
               </Table.Tr>
@@ -135,7 +134,7 @@ function EditBlock({block, editBlock, deleteBlock, allowDelete}) {
           events={{hover: !allowDelete}}
         >
           <ActionIcon variant="default" onClick={deleteBlock} disabled={!allowDelete}>
-            <IconDelete color={allowDelete ? 'black' : 'grey'} />
+            <Icon.Delete color={allowDelete ? 'black' : 'grey'} />
           </ActionIcon>
         </Tooltip>
       </Flex>
@@ -295,10 +294,10 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard}) {
 
 function CardPreviewPanel({cards, activeCard}) {
 
-  useEffect(() => {
-    API.ping()
-  }, [])
-  
+  // useEffect(() => {
+  //   API.ping()
+  // }, [])
+
   return activeCard>=0 && activeCard<cards.length && <>
     <Flex direction="column" gap="md" w={panels[2]} id="preview-panel">
       {/* <Space h="xl"/> */}
@@ -331,7 +330,7 @@ function SettingsPanel({cards, activeCard}) {
   </>
 }
 
-function NewGame({}) {
+function NewGame({empty=false}) {
   const [cards, setCards] = useState([])
   const [activeCard, setActiveCard] = useState(-1)
 
