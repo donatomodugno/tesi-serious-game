@@ -11,7 +11,7 @@ function Navbar({logged=true}) {
 
     return <Flex gap="sm" id="navbar">
         <Link to="/home" id="nav-title">
-            <Title order={2}>BPMN BattleCards</Title>
+            <Title order={2} c="#004">BPMN BattleCards</Title>
         </Link>
         <Divider orientation="vertical" />
         {buttons.map((b,i) => (

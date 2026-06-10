@@ -1,20 +1,16 @@
-POST http://localhost:3001/api/card HTTP/1.1
-content-type: application/json
-
-{
-    "ex_id": 0,
-    "name": "Employer starts the task of the day"
-}
-
-###
-
-GET http://localhost:3001/api/cards HTTP/1.1
-
-###
+### Test
 
 GET http://localhost:3001/api/ping HTTP/1.1
 
-###
+
+
+
+
+
+
+
+
+### Exercises
 
 GET http://localhost:3001/api/exercises HTTP/1.1
 
@@ -42,6 +38,51 @@ content-type: application/json
 
 ###
 
+DELETE http://localhost:3001/api/exercise/1 HTTP/1.1
+
+
+
+
+
+
+
+
+
+### Cards
+
+GET http://localhost:3001/api/cards HTTP/1.1
+
 ###
 
-DELETE http://localhost:3001/api/exercise/1 HTTP/1.1
+GET http://localhost:3001/api/cards/1 HTTP/1.1
+
+###
+
+GET http://localhost:3001/api/card/1 HTTP/1.1
+
+###
+
+POST http://localhost:3001/api/card HTTP/1.1
+content-type: application/json
+
+{
+    "ex_id": 1,
+    "name": "Employer starts the task of the day"
+}
+
+###
+
+PUT http://localhost:3001/api/card/1 HTTP/1.1
+content-type: application/json
+
+{
+    "name": "Card modificata"
+}
+
+###
+
+DELETE http://localhost:3001/api/card/1 HTTP/1.1
+
+###
+
+DELETE http://localhost:3001/api/cards/0 HTTP/1.1

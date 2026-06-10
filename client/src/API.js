@@ -2,7 +2,7 @@ const BASE_URL = 'http://localhost:3001'
 
 async function request(method, path, body) {
     try {
-        const res = await fetch(BASE_URL + path, {
+        const res = await fetch(BASE_URL+path, {
             method: method,
             // credentials: 'include',
             headers: {
@@ -12,7 +12,7 @@ async function request(method, path, body) {
         })
         let obj
         const type = res.headers.get('content-type')
-        if(type && type.indexOf('application/json') !== -1) {
+        if(type && type.indexOf('application/json')!==-1) {
             obj = await res.json()
         } else {
             obj = await res.text()
@@ -39,19 +39,34 @@ API.ping = async () => {
     console.log(res)
 }
 
-API.cards = async () => {
-    const res = await get('/api/cards')
-    console.log(res)
+// API.cards = async () => {
+//     const res = await get('/api/cards')
+//     return res
+// }
+
+// API.card = async (card) => {
+//     const res = await post('/api/card', card)
+//     return res
+// }
+
+API.getExercises = async () => {
+    return await get('/api/exercises')
 }
 
-API.card = async (card) => {
-    const res = await post('/api/card', card)
-    console.log(res)
+API.getExercise = async (ex) => {
+    return await get('/api/exercise/'+ex.id)
 }
 
-API.saveExercise = async (ex) => {
-    const res = await post('/api/exercise', ex)
-    console.log(res)
+API.createExercise = async (ex) => {
+    return await post('/api/exercise', ex)
+}
+
+API.editExercise = async (ex) => {
+    await put('/api/exercise/'+ex.id, ex)
+}
+
+API.deleteExercise = async (ex) => {
+    await del('/api/exercise/'+ex.id)
 }
 
 export default {...API}

@@ -4,9 +4,9 @@ import './Gameboard.css'
 import { Flex, ScrollArea, Table, Modal,
   Title, Text, Space, Button, Fieldset,
   TextInput, Input, InputBase, Slider, ActionIcon,
-  Combobox, useCombobox, Tooltip } from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
+  Combobox, useCombobox, Tooltip, Transition } from '@mantine/core'
 import { useState, useEffect, useRef } from 'react'
+import { useParams } from 'react-router'
 import { Icon, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor } from '../icons'
 import API from '../API'
 
@@ -55,8 +55,7 @@ function ModalDelete({opened, close, deleteCard}) {
     <Flex>
       <Text>Are you sure to delete this card?</Text>
     </Flex>
-    <Space h="xl" />
-    <Flex justify="flex-end" gap="md">
+    <Flex justify="flex-end" gap="md" mt="xl">
       <Button color="gray" variant="light" onClick={close}>Cancel</Button>
       <Button color="red" variant="light" onClick={() => {
         close()
@@ -88,6 +87,7 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard}) {
       deleteCard={() => deleteCard(cardToDelete)}
     />
     <Flex id="list-panel" direction="column" gap="lg" w={panels[0]} h="100%">
+      <Title ta="center" order={3} style={{cursor:'pointer'}} onClick={() => setActiveCard(-1)}>Exercise test</Title>
       <Button color="green" onClick={() => addCard(new_card)}>Add card</Button>
       <ScrollArea.Autosize h="100%" mah={'100%'} type="always" scrollbars="y" offsetScrollbars="present">
         <Table verticalSpacing="sm" striped={false} highlightOnHover withTableBorder={false}>
@@ -298,39 +298,55 @@ function CardPreviewPanel({cards, activeCard}) {
   //   API.ping()
   // }, [])
 
-  return activeCard>=0 && activeCard<cards.length && <>
-    <Flex direction="column" gap="md" w={panels[2]} id="preview-panel">
+  return <Transition mounted={activeCard>=0 && activeCard<cards.length} transition="fade-up" timingFunction="cubic-bezier(0,0,0,1)" duration={400} exitDuration={0}>
+    {(style) => <Flex style={style} direction="column" gap="md" w={panels[2]} id="preview-panel">
       {/* <Space h="xl"/> */}
       <Title order={3}>Card preview</Title>
       <Flex id="card-preview" direction="column" justify="center" align="center" className="type-bpmn">
-        <span>{cards[activeCard].title}</span>
-        <span>{cards[activeCard].cost+'🪙'}</span>
+        <span>{cards[activeCard]?.title || 'Card title'}</span>
+        <span>{(cards[activeCard]?.cost || 'N')+'🪙'}</span>
       </Flex>
       {/* <Button onClick={() => console.log(cards)}>log cards</Button> */}
-    </Flex>
-  </>
+    </Flex>}
+  </Transition>
 }
 
 function SettingsPanel({cards, activeCard}) {
-  const [settings, setSettings] = useState({title:'<New exercise>'})
+  const {id} = useParams()
+  const [title, setTitle] = useState('')
+
+  useEffect(() => {
+    const loadTitle = async() => {
+      setTitle((await API.getExercise({id})).name)
+    }
+    loadTitle()
+  }, [])
+
+  const editTitle = async ({currentTarget:{value}}) => {
+    setTitle(value)
+    await API.editExercise({id, name: value})
+  }
+
+
 
   return (activeCard<0 || activeCard>=cards.length) && <>
     <Flex direction="column" gap="md" w={panels[1]} id="settings-panel">
-      <Title>{settings.title || '<New exercise>'}</Title>
+      <Title>{title || '<Untitled>'}</Title>
       <Title order={3}>Exercise settings</Title>
       <TextInput
         label="Title"
         placeholder="Insert exercise title here"
-        value={settings.title}
-        onChange={({currentTarget:{value}}) => {setSettings({...settings, title: value})}}
+        value={title}
+        onChange={editTitle}
         maxLength="24"
+        error={!title && 'Title can\'t be empty'}
       />
       N. of cards: {cards.length}
     </Flex>
   </>
 }
 
-function NewGame({empty=false}) {
+function NewGame({}) {
   const [cards, setCards] = useState([])
   const [activeCard, setActiveCard] = useState(-1)
 
