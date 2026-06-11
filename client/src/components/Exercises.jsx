@@ -23,7 +23,7 @@ function ModalDelete({opened, close, confirm}) {
         centered
     >
         <Flex direction="column">
-            <Text c="red" fw="bold">{(opened && opened.name) || 'Exercise'}</Text>
+            <Text c="red" fw="bold">{opened?.name || 'Exercise'}</Text>
             <Text>Are you sure to delete this exercise?</Text>
         </Flex>
         <Flex justify="flex-end" gap="md" mt="xl">
@@ -36,19 +36,7 @@ function ModalDelete({opened, close, confirm}) {
 function Exercises({logged=true}) {
     const [newId, setNewId] = useState(null)
     const [exerciseToDelete, setExerciseToDelete] = useState(null)
-    const [exercises, setExercises] = useState([
-        'Car rental',
-        'Hotel reservations',
-        'Water company',
-        'Parking station',
-        'Car rental',
-        'Hotel reservations',
-    ])
-
-    useEffect(() => {
-        // API.ping()
-        loadExercises()
-    }, [])
+    const [exercises, setExercises] = useState([])
 
     const loadExercises = async () => {
         // setExercises((await API.getExercises()).map(ex => ({...ex, title: ex.name})))
@@ -64,6 +52,10 @@ function Exercises({logged=true}) {
         await API.deleteExercise(ex)
         loadExercises()
     }
+
+    useEffect(() => {
+        loadExercises()
+    }, [])
 
     return <>
         {newId && <Navigate to={"/edit/"+newId}/>}

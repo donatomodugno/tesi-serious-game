@@ -34,20 +34,16 @@ const del = async (path) => request('DELETE', path, undefined)
 
 const API = {}
 
+// TEST
+
 API.ping = async () => {
     const res = await get('/api/ping')
     console.log(res)
 }
 
-// API.cards = async () => {
-//     const res = await get('/api/cards')
-//     return res
-// }
 
-// API.card = async (card) => {
-//     const res = await post('/api/card', card)
-//     return res
-// }
+
+// EXERCISES (API)
 
 API.getExercises = async () => {
     return await get('/api/exercises')
@@ -68,5 +64,39 @@ API.editExercise = async (ex) => {
 API.deleteExercise = async (ex) => {
     await del('/api/exercise/'+ex.id)
 }
+
+
+
+// CARD (API)
+
+API.getCards = async () => {
+    return await get('/api/cards')
+}
+
+API.getExerciseCards = async (ex_id) => {
+    return await get('/api/cards/'+ex_id)
+}
+
+API.getCard = async (id) => {
+    return await get('/api/card/'+id)
+}
+
+API.createCard = async (card) => {
+    return await post('/api/card', card)
+}
+
+API.editCard = async (card) => {
+    return await put('/api/card/'+card.id, card)
+}
+
+API.deleteCard = async (id) => {
+    return await del('/api/card/'+id)
+}
+
+API.deleteExerciseCards = async (ex_id) => {
+    return await del('/api/cards/'+ex_id)
+}
+
+
 
 export default {...API}

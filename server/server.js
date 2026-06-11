@@ -113,7 +113,7 @@ app.get('/api/card/:id', async (req, res) => {
 app.post('/api/card', async (req, res) => {
     try {
         const id = await dao.addCard(req.body)
-        await dao.editCard({name: req.body.name+' '+id, id})
+        await dao.editCard({name: req.body.title+' '+id, id})
         console.log('Inserimento eseguito')
         res.status(200).send(id)
     } catch(err) {

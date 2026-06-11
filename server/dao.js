@@ -161,7 +161,7 @@ exports.getCard = (card) => {
 exports.addCard = (card) => {
     return new Promise((resolve, reject) => {
         const sql = "INSERT INTO cards(ex_id,name) VALUES(?,?)"
-        db.run(sql, [card.ex_id, card.name], function (err) {
+        db.run(sql, [card.ex_id, card.title], function (err) {
             if(err) {
                 reject(err)
                 return

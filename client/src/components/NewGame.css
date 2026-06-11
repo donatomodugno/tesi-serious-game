@@ -4,14 +4,32 @@
     --mant-light: #F8F9FA;
 }
 
+#title {
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
 #list-panel {
     padding: 20px;
+    padding-bottom: 0;
     background-color: var(--mant-light);
+}
+
+#list-panel table {
+    table-layout: fixed;
 }
 
 .list-item {
     cursor: pointer;
     user-select: none;
+}
+
+.list-item td {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .active, .active:hover {
@@ -25,6 +43,7 @@
 
 #edit-panel, #preview-panel, #settings-panel {
     padding: 10px;
+    padding-bottom: 0;
     margin-top: 10px;
 }
 
@@ -41,6 +60,8 @@
     width: 200px;
     height: 280px;
     border-radius: 20px;
-    font-size: 130%;
     user-select: none;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
 }

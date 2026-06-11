@@ -67,7 +67,7 @@ content-type: application/json
 
 {
     "ex_id": 1,
-    "name": "Employer starts the task of the day"
+    "title": "Employer starts the task of the day"
 }
 
 ###

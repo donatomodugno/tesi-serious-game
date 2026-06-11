@@ -11,7 +11,7 @@ import { Icon, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, ico
 import API from '../API'
 
 const panels = ['20%', '40%', '20%']
-const new_card = {title: '<New card>', cost: 1, blocks: [{type: 'task', text: 'First block'}, {type: 'gw-xor'}]}
+const new_card = {title: 'Card', cost: 1, blocks: [{type: 'task', text: 'First block'}, {type: 'gw-xor'}]}
 const block_types_groups = [
   {group: 'Tasks', children: [
     {value: 'task', label: <Flex align="center" gap="xs">{iconTask} Task</Flex>},
@@ -35,7 +35,7 @@ const block_types_groups = [
   ]},
 ]
 
-function ModalDelete({opened, close, deleteCard}) {
+function ModalDelete({opened, close, confirm}) {
   return <Modal
     opened={opened}
     onClose={close}
@@ -57,49 +57,63 @@ function ModalDelete({opened, close, deleteCard}) {
     </Flex>
     <Flex justify="flex-end" gap="md" mt="xl">
       <Button color="gray" variant="light" onClick={close}>Cancel</Button>
-      <Button color="red" variant="light" onClick={() => {
-        close()
-        deleteCard()
-      }}>Delete</Button>
+      <Button color="red" variant="light" onClick={confirm}>Delete</Button>
     </Flex>
   </Modal>
 }
 
-function CardsListPanel({cards, setCards, activeCard, setActiveCard}) {
+function CardsListPanel({cards, setCards, activeCard, setActiveCard, title}) {
   const [cardToDelete, setCardToDelete] = useState(-1)
-
-  function addCard(card_new) {
+  const {id} = useParams()
+  
+  const loadCards = async () => {
+    // setCards(await API.getExerciseCards(...))
+    setCards((await API.getCards()).map(c => ({...c, title: c.name})))
+  }
+  const addCard = async () => {
+    await API.createCard({...new_card, ex_id: id})
+    await loadCards()
     setActiveCard(cards.length)
-    setCards([...cards, card_new])
+    // setCards([...cards, added_card])
   }
 
-  function deleteCard(key) {
-    const cards_tmp = [...cards]
-    cards_tmp.splice(key, 1)
-    setCards(cards_tmp)
-    setTimeout(() => setActiveCard(-1), 1) // How to achieve this without timeout??
+  const deleteCard = async (key) => {
+    await API.deleteCard(cards[key].id)
+    await loadCards()
+    // const cards_tmp = [...cards]
+    // cards_tmp.splice(key, 1)
+    // setCards(cards_tmp)
   }
+  
+  useEffect(() => {
+    loadCards()
+  }, [])
+
 
   return <>
     <ModalDelete
       opened={cardToDelete>=0}
       close={() => setCardToDelete(-1)}
-      deleteCard={() => deleteCard(cardToDelete)}
+      confirm={() => {
+        deleteCard(cardToDelete)
+        setCardToDelete(-1)
+        setActiveCard(-1)
+      }}
     />
     <Flex id="list-panel" direction="column" gap="lg" w={panels[0]} h="100%">
-      <Title ta="center" order={3} style={{cursor:'pointer'}} onClick={() => setActiveCard(-1)}>Exercise test</Title>
-      <Button color="green" onClick={() => addCard(new_card)}>Add card</Button>
-      <ScrollArea.Autosize h="100%" mah={'100%'} type="always" scrollbars="y" offsetScrollbars="present">
+      <Title ta="center" order={3} py="10" id="title" onClick={() => setActiveCard(-1)}>{title || '<Untitled>'}</Title>
+      <Button color="green" h="45" onClick={addCard}>Add card</Button>
+      <ScrollArea.Autosize h="100%" mah="100%" type="always" scrollbars="y" offsetScrollbars="present">
         <Table verticalSpacing="sm" striped={false} highlightOnHover withTableBorder={false}>
           <Table.Tbody>
             {cards.map((c, k) => (
               <Table.Tr
                 key={k}
-                onClick={() => setActiveCard(k)}//() => k==activeCard ? setActiveCard(-1) : setActiveCard(k)
+                onClick={() => setActiveCard(k)}
                 className={'list-item' + (k==activeCard ? ' active' : '')}
               >
-                <Table.Td>{c.title || (activeCard!=k && '<Untitled card>')}&nbsp;</Table.Td>
-                <Table.Td w="0" className="trash">
+                <Table.Td>{c.title || '<Untitled card>'}&nbsp;</Table.Td>
+                <Table.Td w="45" className="trash">
                   {k==activeCard && <ActionIcon size="lg" color="green" visibility="hidden" onClick={() => setCardToDelete(k)}>
                     <Icon.Delete color="white" />
                   </ActionIcon>}
@@ -237,8 +251,14 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard}) {
     setCards(cards_tmp)
   }
 
-  return activeCard>=0 && activeCard<cards.length && <>
-    <Flex direction="column" gap="md" w={panels[1]} id="edit-panel">
+  return <Transition
+    mounted={activeCard>=0 && activeCard<cards.length}
+    transition="fade-left"
+    timingFunction="cubic-bezier(0,0,0,1)"
+    duration={400}
+    exitDuration={0}
+  >
+    {(s) => <Flex style={s} direction="column" gap="md" w={panels[1]} id="edit-panel">
       <Title order={3}>
         <Flex align="center" gap="sm">
           <Tooltip label="Go back to settings">
@@ -249,17 +269,16 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard}) {
           Edit card
         </Flex>
       </Title>
-      <ScrollArea h="80%">
-        <Flex direction="column" gap="md" id="edit-area">
+      <ScrollArea h="100%">
+        {cards[activeCard] && <Flex direction="column" gap="md" id="edit-area">
           <TextInput
             label="Title"
             placeholder="Insert card title here"
-            error={inputTitleError}
+            error={!cards[activeCard].title && 'Title can\'t be empty'}
             value={cards[activeCard].title==new_card.title ? '' : cards[activeCard].title}
             onChange={handleTitleChange}
             onBlur={handleTitleBlur}
-            pattern="\d*" // Does not work...
-            maxLength="24"
+            maxLength="80"
           />
           <Input.Wrapper label="Cost">
             <Slider
@@ -276,7 +295,7 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard}) {
             />
           </Input.Wrapper>
           <Space />
-          {cards[activeCard].blocks.map((b, k) => (
+          {cards[activeCard].blocks?.map((b, k) => (
             <EditBlock
               key={k}
               block={b}
@@ -285,34 +304,67 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard}) {
               allowDelete={cards[activeCard].blocks.length>1}
             />
           ))}
-          <Button color="green" onClick={addBlock}>Add block</Button>
-        </Flex>
+          <Button color="green" mb="20" onClick={addBlock}>Add block</Button>
+        </Flex>}
       </ScrollArea>
-    </Flex>
-  </>
+    </Flex>}
+  </Transition>
 }
 
 function CardPreviewPanel({cards, activeCard}) {
-
-  // useEffect(() => {
-  //   API.ping()
-  // }, [])
-
-  return <Transition mounted={activeCard>=0 && activeCard<cards.length} transition="fade-up" timingFunction="cubic-bezier(0,0,0,1)" duration={400} exitDuration={0}>
-    {(style) => <Flex style={style} direction="column" gap="md" w={panels[2]} id="preview-panel">
-      {/* <Space h="xl"/> */}
+  return <Transition
+    mounted={activeCard>=0 && activeCard<cards.length}
+    transition="fade-left"
+    timingFunction="cubic-bezier(0,0,0,1)"
+    duration={400}
+    exitDuration={0}
+  >
+    {(s) => <Flex style={s} direction="column" gap="md" w={panels[2]} id="preview-panel">
       <Title order={3}>Card preview</Title>
       <Flex id="card-preview" direction="column" justify="center" align="center" className="type-bpmn">
-        <span>{cards[activeCard]?.title || 'Card title'}</span>
-        <span>{(cards[activeCard]?.cost || 'N')+'🪙'}</span>
+        <Text ta="center" fz="xl" p="20">{cards[activeCard]?.title}</Text>
+        <Text ta="center" fz="xl" p="20">{cards[activeCard]?.cost+'🪙'}</Text>
       </Flex>
       {/* <Button onClick={() => console.log(cards)}>log cards</Button> */}
     </Flex>}
   </Transition>
 }
 
-function SettingsPanel({cards, activeCard}) {
+function SettingsPanel({cards, activeCard, title, setTitle}) {
   const {id} = useParams()
+
+  const editTitle = async ({currentTarget: {value}}) => {
+    setTitle(value)
+    await API.editExercise({id, name: value})
+  }
+
+  return <Transition
+    mounted={activeCard<0 || activeCard>=cards.length}
+    transition="fade-right"
+    timingFunction="cubic-bezier(0,0,0,1)"
+    duration={400}
+    exitDuration={0}
+  >
+    {(s) => <Flex style={s} direction="column" gap="md" w={panels[1]} id="settings-panel">
+      {/* <Title>{title || '<Untitled>'}</Title> */}
+      <Title order={3}>Exercise settings</Title>
+      <TextInput
+        label="Title"
+        placeholder="Insert exercise title here"
+        value={title}
+        onChange={editTitle}
+        maxLength="40"
+        error={!title && 'Title can\'t be empty'}
+      />
+      N. of cards: {cards.length}
+    </Flex>}
+  </Transition>
+}
+
+function NewGame({}) {
+  const {id} = useParams()
+  const [cards, setCards] = useState([])
+  const [activeCard, setActiveCard] = useState(-1)
   const [title, setTitle] = useState('')
 
   useEffect(() => {
@@ -322,44 +374,16 @@ function SettingsPanel({cards, activeCard}) {
     loadTitle()
   }, [])
 
-  const editTitle = async ({currentTarget:{value}}) => {
-    setTitle(value)
-    await API.editExercise({id, name: value})
-  }
-
-
-
-  return (activeCard<0 || activeCard>=cards.length) && <>
-    <Flex direction="column" gap="md" w={panels[1]} id="settings-panel">
-      <Title>{title || '<Untitled>'}</Title>
-      <Title order={3}>Exercise settings</Title>
-      <TextInput
-        label="Title"
-        placeholder="Insert exercise title here"
-        value={title}
-        onChange={editTitle}
-        maxLength="24"
-        error={!title && 'Title can\'t be empty'}
-      />
-      N. of cards: {cards.length}
-    </Flex>
-  </>
-}
-
-function NewGame({}) {
-  const [cards, setCards] = useState([])
-  const [activeCard, setActiveCard] = useState(-1)
-
   // useEffect(() => {
   //   APIs...
   // }, [cards])
 
   return <>
-    <Flex direction="row" h="90%" gap="60">
-      <CardsListPanel cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}/>
+    <Flex direction="row" h="92%" gap="60">
+      <CardsListPanel cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard} title={title}/>
       <CardEditPanel  cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}/>
       <CardPreviewPanel cards={cards} activeCard={activeCard}/>
-      <SettingsPanel cards={cards} activeCard={activeCard}/>
+      <SettingsPanel cards={cards} activeCard={activeCard} title={title} setTitle={setTitle}/>
     </Flex>
   </>
 }
