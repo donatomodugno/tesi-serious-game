@@ -49,20 +49,20 @@ API.getExercises = async () => {
     return await get('/api/exercises')
 }
 
-API.getExercise = async (ex) => {
-    return await get('/api/exercise/'+ex.id)
+API.getExercise = async (id) => {
+    return await get('/api/exercise/'+id)
 }
 
-API.createExercise = async (ex) => {
-    return await post('/api/exercise', ex)
+API.createExercise = async (exer) => {
+    return await post('/api/exercise', exer)
 }
 
-API.editExercise = async (ex) => {
-    await put('/api/exercise/'+ex.id, ex)
+API.editExercise = async (exer) => {
+    await put('/api/exercise/'+exer.id, exer)
 }
 
-API.deleteExercise = async (ex) => {
-    await del('/api/exercise/'+ex.id)
+API.deleteExercise = async (id) => {
+    await del('/api/exercise/all/'+id)
 }
 
 
@@ -90,11 +90,39 @@ API.editCard = async (card) => {
 }
 
 API.deleteCard = async (id) => {
-    return await del('/api/card/'+id)
+    return await del('/api/card/all/'+id)
 }
 
 API.deleteExerciseCards = async (ex_id) => {
-    return await del('/api/cards/'+ex_id)
+    return await del('/api/cards/all/'+ex_id)
+}
+
+
+
+// BLOCKS (API)
+
+API.getBlocks = async () => {
+    return await get('/api/blocks')
+}
+
+API.getCardBlocks = async (c_id) => {
+    return await get('/api/blocks/'+c_id)
+}
+
+API.getBlock = async (id) => {
+    return await get('/api/block/'+id)
+}
+
+API.createBlock = async (block) => {
+    return await post('/api/block', block)
+}
+
+API.editBlock = async (block) => {
+    return await put('/api/block/'+block.id, block)
+}
+
+API.deleteBlock = async (id) => {
+    return await del('/api/block/'+id)
 }
 
 

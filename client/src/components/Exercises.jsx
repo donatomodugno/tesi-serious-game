@@ -23,7 +23,7 @@ function ModalDelete({opened, close, confirm}) {
         centered
     >
         <Flex direction="column">
-            <Text c="red" fw="bold">{opened?.name || 'Exercise'}</Text>
+            <Text c="red" fw="bold">{opened?.name || '...'}</Text>
             <Text>Are you sure to delete this exercise?</Text>
         </Flex>
         <Flex justify="flex-end" gap="md" mt="xl">
@@ -49,7 +49,7 @@ function Exercises({logged=true}) {
     }
 
     const deleteExercise = async (ex) => {
-        await API.deleteExercise(ex)
+        await API.deleteExercise(ex.id)
         loadExercises()
     }
 

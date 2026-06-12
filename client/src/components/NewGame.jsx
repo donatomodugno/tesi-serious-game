@@ -11,7 +11,8 @@ import { Icon, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, ico
 import API from '../API'
 
 const panels = ['20%', '40%', '20%']
-const new_card = {title: 'Card', cost: 1, blocks: [{type: 'task', text: 'First block'}, {type: 'gw-xor'}]}
+const new_card = {name: 'Card', cost: 1}
+const new_block = {type: 'task', text: 'New block'}
 const block_types_groups = [
   {group: 'Tasks', children: [
     {value: 'task', label: <Flex align="center" gap="xs">{iconTask} Task</Flex>},
@@ -35,16 +36,11 @@ const block_types_groups = [
   ]},
 ]
 
-function ModalDelete({opened, close, confirm}) {
+function ModalDelete({opened, close, confirm, title, text, variant='light'}) {
   return <Modal
     opened={opened}
     onClose={close}
-    title={
-      <Flex align="center" gap="sm">
-        <Icon.Delete color="red"/>
-        <Text span fw="700"> Delete card</Text>
-      </Flex>
-    }
+    title={title}
     overlayProps={{
       backgroundOpacity: 0.5,
       blur: 3,
@@ -53,33 +49,28 @@ function ModalDelete({opened, close, confirm}) {
     size="xs"
   >
     <Flex>
-      <Text>Are you sure to delete this card?</Text>
+      <Text>{text}</Text>
     </Flex>
     <Flex justify="flex-end" gap="md" mt="xl">
-      <Button color="gray" variant="light" onClick={close}>Cancel</Button>
-      <Button color="red" variant="light" onClick={confirm}>Delete</Button>
+      <Button color="gray" variant={variant} onClick={close}>Cancel</Button>
+      <Button color="red" variant={variant} onClick={confirm}>Delete</Button>
     </Flex>
   </Modal>
 }
 
-function CardsListPanel({cards, setCards, activeCard, setActiveCard, title}) {
+function CardsListPanel({cards, setCards, activeCard, setActiveCard, loadCards, createCard, title}) {
   const [cardToDelete, setCardToDelete] = useState(-1)
-  const {id} = useParams()
-  
-  const loadCards = async () => {
-    // setCards(await API.getExerciseCards(...))
-    setCards((await API.getCards()).map(c => ({...c, title: c.name})))
-  }
+
   const addCard = async () => {
-    await API.createCard({...new_card, ex_id: id})
+    await createCard()
     await loadCards()
     setActiveCard(cards.length)
-    // setCards([...cards, added_card])
   }
 
   const deleteCard = async (key) => {
     await API.deleteCard(cards[key].id)
     await loadCards()
+    setActiveCard(-1)
     // const cards_tmp = [...cards]
     // cards_tmp.splice(key, 1)
     // setCards(cards_tmp)
@@ -99,10 +90,17 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard, title}) {
         setCardToDelete(-1)
         setActiveCard(-1)
       }}
+      title={
+        <Flex align="center" gap="sm">
+          <Icon.Delete color="red"/>
+          <Text span fw="700"> Delete card</Text>
+        </Flex>
+      }
+      text="Are you sure to delete this card?"
     />
     <Flex id="list-panel" direction="column" gap="lg" w={panels[0]} h="100%">
       <Title ta="center" order={3} py="10" id="title" onClick={() => setActiveCard(-1)}>{title || '<Untitled>'}</Title>
-      <Button color="green" h="45" onClick={addCard}>Add card</Button>
+      <Button color="green" h="45" onClick={addCard} leftSection={<Icon.PlusCard color="white"/>}>Add card</Button>
       <ScrollArea.Autosize h="100%" mah="100%" type="always" scrollbars="y" offsetScrollbars="present">
         <Table verticalSpacing="sm" striped={false} highlightOnHover withTableBorder={false}>
           <Table.Tbody>
@@ -112,7 +110,7 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard, title}) {
                 onClick={() => setActiveCard(k)}
                 className={'list-item' + (k==activeCard ? ' active' : '')}
               >
-                <Table.Td>{c.title || '<Untitled card>'}&nbsp;</Table.Td>
+                <Table.Td><Text>{c.name || '<Untitled card>'}</Text></Table.Td>
                 <Table.Td w="45" className="trash">
                   {k==activeCard && <ActionIcon size="lg" color="green" visibility="hidden" onClick={() => setCardToDelete(k)}>
                     <Icon.Delete color="white" />
@@ -127,8 +125,9 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard, title}) {
   </>
 }
 
-function EditBlock({block, editBlock, deleteBlock, allowDelete}) {
+function EditBlock({blocks, setBlocks, index, allowDelete}) {
   const combobox = useCombobox()
+
   function findLabel(value) {
     for(let g of block_types_groups) {
       for(let c of g.children) {
@@ -136,6 +135,29 @@ function EditBlock({block, editBlock, deleteBlock, allowDelete}) {
       }
     }
     return 'Invalid value'
+  }
+
+  const saveBlock = async () => {
+    await API.editBlock(blocks[index])
+  }
+
+  const deleteBlock = async () => {
+    await API.deleteBlock(blocks[index].id)
+    setBlocks(blocks.toSpliced(index, 1))
+  }
+
+  const handleTypeSubmit = async (type) => {
+    combobox.closeDropdown()
+    setBlocks(blocks.toSpliced(index, 1, {...blocks[index], type}))
+    await saveBlock()
+  }
+
+  const handleTextChange = ({currentTarget: {value}}) => {
+    setBlocks(blocks.toSpliced(index, 1, {...blocks[index], text: value}))
+  }
+
+  const handleTextBlur = async ({currentTarget: {value}}) => {
+    await saveBlock()
   }
 
   return <Fieldset
@@ -159,10 +181,7 @@ function EditBlock({block, editBlock, deleteBlock, allowDelete}) {
     <Input.Wrapper label="Block type">
       <Combobox
         store={combobox}
-        onOptionSubmit={v => {
-          editBlock({...block, type: v})
-          combobox.closeDropdown()
-        }}
+        onOptionSubmit={handleTypeSubmit}
       >
         <Combobox.Target>
           <InputBase
@@ -173,15 +192,15 @@ function EditBlock({block, editBlock, deleteBlock, allowDelete}) {
             rightSectionPointerEvents="none"
             onClick={() => combobox.toggleDropdown()}
           >
-            {findLabel(block.type)}
+            {findLabel(blocks[index]?.type)}
           </InputBase>
         </Combobox.Target>
         <Combobox.Dropdown>
           <Combobox.Options mah={200} style={{ overflowY: 'auto' }}>
-            {block_types_groups.map(({group, children}) => (
-              <Combobox.Group label={group} key={group}>
-                {children.map(({value, label}) => (
-                  <Combobox.Option value={value} key={value}>
+            {block_types_groups.map(({group, children}, k) => (
+              <Combobox.Group key={k} label={group} index={group}>
+                {children.map(({value, label}, k) => (
+                  <Combobox.Option key={k} value={value} index={value}>
                     {label}
                   </Combobox.Option>
                 ))}
@@ -191,64 +210,82 @@ function EditBlock({block, editBlock, deleteBlock, allowDelete}) {
         </Combobox.Dropdown>
       </Combobox>
     </Input.Wrapper>
-    {['task', 'task-m', 'task-u', 'task-s', 'pool', 'lane'].includes(block.type) && <TextInput
+    {['task', 'task-m', 'task-u', 'task-s', 'pool', 'lane'].includes(blocks[index]?.type) && <TextInput
       label={
-        block.type=='pool'
+        blocks[index]?.type=='pool'
         ? 'Pool name'
-        : block.type=='lane'
+        : blocks[index]?.type=='lane'
           ? 'Lane name'
           : 'Task text'
       }
       placeholder={
-        ['pool', 'lane'].includes(block.type)
-        ? 'Insert the name of the '+block.type
+        ['pool', 'lane'].includes(blocks[index]?.type)
+        ? 'Insert the name of the '+blocks[index]?.type
         : 'Insert the task to perform'
       }
-      value={block.text}
-      onChange={({currentTarget: {value}}) => editBlock({...block, text: value})}
+      value={blocks[index]?.text}
+      // onChange={({currentTarget: {value}}) => editBlock({...block, text: value})}
+      onChange={handleTextChange}
+      onBlur={handleTextBlur}
     />}
   </Fieldset>
 }
 
-function CardEditPanel({cards, setCards, activeCard, setActiveCard}) {
-  const [inputTitleError, setInputTitleError] = useState(false)
+function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
+  const c_id = cards[activeCard]?.id
+  const [blocks, setBlocks] = useState([])
+
+  const loadBlocks = async () => {
+    setBlocks(await API.getCardBlocks(cards[activeCard].id))
+  }
+
+  const addBlock = async () => {
+    await API.createBlock({...new_block, c_id})
+    setBlocks([...blocks, new_block])
+  }
+
+  // const editBlock = async (key, new_block) => {
+  //   await API.editBlock({...blocks[key], c_id})
+  //   setBlocks(blocks.toSpliced(key, 1, new_block))
+  // }
+
+  // function editBlock(key, new_block) {
+    // const cards_tmp = [...cards]
+    // cards_tmp[activeCard].blocks[key] = new_block
+    // setCards(cards_tmp)
+  // }
+
+  // function deleteBlock(key) {
+    // const cards_tmp = [...cards]
+    // cards_tmp[activeCard].blocks.splice(key, 1)
+    // setCards(cards_tmp)
+  // }
 
   useEffect(() => {
-    setInputTitleError(activeCard>=0 && (cards[activeCard].title=='' ? 'Title can\'t be empty' : false))
+    if(activeCard>=0 && activeCard<cards.length)
+      loadBlocks()
   }, [activeCard])
-
+  
   const handleTitleChange = ({currentTarget: {value}}) => {
-    const cards_tmp = [...cards]
-    cards_tmp[activeCard] = {...cards_tmp[activeCard], title: value}
-    setCards(cards_tmp)
-    if(value!='') setInputTitleError(false)
+    // const cards_tmp = [...cards]
+    // cards_tmp[activeCard] = {...cards_tmp[activeCard], name: value}
+    // setCards(cards_tmp)
+    setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], name: value}))
   }
-  const handleTitleBlur = ({currentTarget: {value}}) => {
-    if(value=='') setInputTitleError('Title can\'t be empty')
+
+  const handleTitleBlur = async ({currentTarget: {value}}) => {
+    await saveCard()
   }
 
   const handleCostChange = (value) => {
-    const cards_tmp = [...cards]
-    cards_tmp[activeCard] = {...cards_tmp[activeCard], cost: value}
-    setCards(cards_tmp)
+    // const cards_tmp = [...cards]
+    // cards_tmp[activeCard].cost = value
+    // setCards(cards_tmp)
+    setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], cost: value}))
   }
 
-  const addBlock = () => {
-    const cards_tmp = [...cards]
-    cards_tmp[activeCard].blocks.push({type: 'task'})
-    setCards(cards_tmp)
-  }
-
-  function editBlock(key, new_block) {
-    const cards_tmp = [...cards]
-    cards_tmp[activeCard].blocks[key] = new_block
-    setCards(cards_tmp)
-  }
-
-  function deleteBlock(key) {
-    const cards_tmp = [...cards]
-    cards_tmp[activeCard].blocks.splice(key, 1)
-    setCards(cards_tmp)
+  const handleCostChangeEnd = async (value) => { // Just to prevent too many requests
+    await saveCard()
   }
 
   return <Transition
@@ -274,8 +311,8 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard}) {
           <TextInput
             label="Title"
             placeholder="Insert card title here"
-            error={!cards[activeCard].title && 'Title can\'t be empty'}
-            value={cards[activeCard].title==new_card.title ? '' : cards[activeCard].title}
+            error={!cards[activeCard].name && 'Title can\'t be empty'}
+            value={cards[activeCard].name}
             onChange={handleTitleChange}
             onBlur={handleTitleBlur}
             maxLength="80"
@@ -292,19 +329,23 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard}) {
               label={null}
               value={cards[activeCard].cost}
               onChange={handleCostChange}
+              onChangeEnd={handleCostChangeEnd}
             />
           </Input.Wrapper>
           <Space />
-          {cards[activeCard].blocks?.map((b, k) => (
+          {blocks.map((b, k) => (
             <EditBlock
               key={k}
-              block={b}
-              editBlock={(nb) => editBlock(k, nb)}
-              deleteBlock={() => deleteBlock(k)}
-              allowDelete={cards[activeCard].blocks.length>1}
+              // block={b}
+              // editBlock={(nb) => editBlock(k, nb)}
+              // deleteBlock={() => deleteBlock(k)}
+              blocks={blocks}
+              setBlocks={setBlocks}
+              index={k}
+              allowDelete={blocks.length>1}
             />
           ))}
-          <Button color="green" mb="20" onClick={addBlock}>Add block</Button>
+          <Button color="green" mb="20" onClick={addBlock} leftSection={<Icon.PlusBlock color="white"/>}>Add block</Button>
         </Flex>}
       </ScrollArea>
     </Flex>}
@@ -322,7 +363,7 @@ function CardPreviewPanel({cards, activeCard}) {
     {(s) => <Flex style={s} direction="column" gap="md" w={panels[2]} id="preview-panel">
       <Title order={3}>Card preview</Title>
       <Flex id="card-preview" direction="column" justify="center" align="center" className="type-bpmn">
-        <Text ta="center" fz="xl" p="20">{cards[activeCard]?.title}</Text>
+        <Text ta="center" fz="xl" p="20">{cards[activeCard]?.name}</Text>
         <Text ta="center" fz="xl" p="20">{cards[activeCard]?.cost+'🪙'}</Text>
       </Flex>
       {/* <Button onClick={() => console.log(cards)}>log cards</Button> */}
@@ -330,12 +371,11 @@ function CardPreviewPanel({cards, activeCard}) {
   </Transition>
 }
 
-function SettingsPanel({cards, activeCard, title, setTitle}) {
-  const {id} = useParams()
+function SettingsPanel({cards, activeCard, title, editTitle, deleteCards}) {
+  const [openedModalDelete, setOpenedModalDelete] = useState(false)
 
-  const editTitle = async ({currentTarget: {value}}) => {
-    setTitle(value)
-    await API.editExercise({id, name: value})
+  const handleTitleChange = ({currentTarget: {value}}) => {
+    editTitle(value)
   }
 
   return <Transition
@@ -346,44 +386,93 @@ function SettingsPanel({cards, activeCard, title, setTitle}) {
     exitDuration={0}
   >
     {(s) => <Flex style={s} direction="column" gap="md" w={panels[1]} id="settings-panel">
-      {/* <Title>{title || '<Untitled>'}</Title> */}
       <Title order={3}>Exercise settings</Title>
       <TextInput
         label="Title"
         placeholder="Insert exercise title here"
         value={title}
-        onChange={editTitle}
+        onChange={handleTitleChange}
         maxLength="40"
         error={!title && 'Title can\'t be empty'}
       />
       N. of cards: {cards.length}
+      <Fieldset legend="Danger zone" variant="filled">
+        <Button color="red" onClick={() => setOpenedModalDelete(true)}>Delete all cards</Button>
+        <ModalDelete
+          opened={openedModalDelete}
+          close={() => setOpenedModalDelete(false)}
+          confirm={() => {
+            deleteCards()
+            setOpenedModalDelete(false)
+          }}
+          title={
+            <Flex align="center" gap="sm">
+              <Icon.Delete color="red"/>
+              <Text span fw="700"> Delete all cards</Text>
+            </Flex>
+          }
+          text="Are you sure to delete ALL cards in this exercise?"
+          variant=""
+        />
+      </Fieldset>
     </Flex>}
   </Transition>
 }
 
 function NewGame({}) {
-  const {id} = useParams()
+  const [title, setTitle] = useState('')
   const [cards, setCards] = useState([])
   const [activeCard, setActiveCard] = useState(-1)
-  const [title, setTitle] = useState('')
+  const ex_id = useParams().id
+
+  const editTitle = async (title) => {
+    setTitle(title)
+    await API.editExercise({id, name: title})
+  }
+  
+  const loadCards = async () => {
+    setCards(await API.getExerciseCards(ex_id))
+  }
+
+  const createCard = async () => {
+    const c_id = await API.createCard({...new_card, ex_id})
+    await API.createBlock({...new_block, c_id})
+  }
+
+  const saveCard = async () => {
+    await API.editCard(cards[activeCard])
+  }
+
+  const deleteCards = async () => {
+    await API.deleteExerciseCards(ex_id)
+    loadCards()
+  }
+
+  const loadTitle = async() => {
+    setTitle((await API.getExercise(ex_id)).name)
+  }
 
   useEffect(() => {
-    const loadTitle = async() => {
-      setTitle((await API.getExercise({id})).name)
-    }
     loadTitle()
   }, [])
 
-  // useEffect(() => {
-  //   APIs...
-  // }, [cards])
-
   return <>
     <Flex direction="row" h="92%" gap="60">
-      <CardsListPanel cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard} title={title}/>
-      <CardEditPanel  cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}/>
-      <CardPreviewPanel cards={cards} activeCard={activeCard}/>
-      <SettingsPanel cards={cards} activeCard={activeCard} title={title} setTitle={setTitle}/>
+      <CardsListPanel
+        cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}
+        loadCards={loadCards} createCard={createCard} title={title}
+      />
+      <CardEditPanel
+        cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}
+        saveCard={saveCard}
+      />
+      <CardPreviewPanel
+        cards={cards} activeCard={activeCard}
+      />
+      <SettingsPanel
+        cards={cards} activeCard={activeCard}
+        deleteCards={deleteCards} title={title} editTitle={editTitle}
+      />
     </Flex>
   </>
 }
