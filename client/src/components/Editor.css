@@ -59,6 +59,8 @@
     color: black;
     width: 200px;
     height: 280px;
+    /* outline: 8px solid #FAFACC; */
+    border: 8px solid #FAFACC;
     border-radius: 20px;
     user-select: none;
     overflow-wrap: break-word;

@@ -27,15 +27,14 @@ app.get('/api/ping', async (req, res) => {
 
 app.delete('/api/all', async (req, res) => {
     try {
-        const promises = []
         const exercises = await dao.listExercises()
         const cards = await dao.listCards()
         const blocks = await dao.listBlocks()
-        promises.push(
+        const promises = [
             exercises.map(e => dao.deleteExercise(e.id)),
             cards.map(c => dao.deleteCard(c.id)),
             blocks.map(b => dao.deleteBlock(b.id)),
-        )
+        ]
         await Promise.all(promises)
         console.log('Deletes done.')
         res.status(200).send('Exercise + cards + blocks eliminati dal db.')

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router'
-import { Flex, Box, Modal, Title, Text, Button, ScrollArea } from '@mantine/core'
+import { Flex, Box, Modal, Title, Text, Button, ScrollArea, Divider } from '@mantine/core'
 import { Icon } from '../icons'
 import API from '../API'
 
@@ -37,10 +37,9 @@ function Exercises({logged=true}) {
     const [newId, setNewId] = useState(null)
     const [exerciseToDelete, setExerciseToDelete] = useState(null)
     const [exercises, setExercises] = useState([])
+    const [showGradients, setShowGradients] = useState({top: false, bottom: false})
 
     const loadExercises = async () => {
-        // setExercises((await API.getExercises()).map(ex => ({...ex, title: ex.name})))
-        // setExercises((await API.getExercises()).map(({id, name}) => ({id, title: name})))
         setExercises(await API.getExercises())
     }
 
@@ -67,17 +66,23 @@ function Exercises({logged=true}) {
                 setExerciseToDelete()
             }}
         />
-        <Flex h="90%" justify="flex-start" gap="sm" direction="column" align="center">
-            {/* <span>
-                <button onClick={() => console.log(exercises)}>logExercise</button>
-                <button>editExercise</button>
-                <button>deleteExercise</button>
-            </span> */}
+        <Flex h="92%" justify="flex-start" gap="sm" /* justify="end" */ direction="column" align="center">
             <Title mt="2.75rem">BPMN BattleCards</Title>
             <Title order={3}>Choose an exercise {logged && <>
                 or <Button color="green" onClick={newExercise}>Create a new exercise</Button>
             </>}</Title>
-            <ScrollArea.Autosize h="70%" w="80%" type="always" scrollbars="y" id="exercises-list">
+            <ScrollArea.Autosize
+                h="70%"
+                mah="70%"
+                w="80%"
+                type="always"
+                scrollbars="y"
+                id="exercises-list"
+                onOverflowChange={(value) => setShowGradients({top: false, bottom: value})}
+                onTopReached={() => {setShowGradients({...showGradients, top: false})}}
+                onBottomReached={() => {setShowGradients({...showGradients, bottom: false})}}
+                onScrollPositionChange={() => {setShowGradients({top: true, bottom: true})}}
+            >
                 {exercises.map((ex, k) => <Flex
                     key={k}
                     w="95%" // Wanted to achieve this using "offsetScrollbars" but it wasn't working properly
@@ -86,27 +91,34 @@ function Exercises({logged=true}) {
                     justify="space-between"
                     style={{backgroundColor:'hsl('+(180+k*30)+' 100 90)'}}
                 >
-                    {logged && <span>
-                        <Link to={"/edit/"+ex.id}>
+                    <span>
+                        {logged && <>
+                            <Link to={"/edit/"+ex.id}>
+                                <Button
+                                    color="green"
+                                    leftSection={<Icon.Edit color="white"/>}
+                                >Edit</Button>
+                            </Link>
                             <Button
-                                color="green"
-                                leftSection={<Icon.Edit color="white"/>}
-                            >Edit</Button>
-                        </Link>
-                        <Button
-                            ml="10"
-                            color="red"
-                            onClick={() => setExerciseToDelete(ex)}
-                            leftSection={<Icon.Delete color="white"/>}
-                        >Delete</Button>
-                    </span>}
-                    <Text size="lg">{ex.name}</Text>
+                                ml="10"
+                                color="red"
+                                onClick={() => setExerciseToDelete(ex)}
+                                leftSection={<Icon.Delete color="white"/>}
+                            >Delete</Button>
+                        </>}
+                    </span>
+                    <Text fz={28}>{ex.name}</Text>
                     <Link to={"/play/"+k}>
-                        <Button color="green" size="lg">Play game!</Button>
+                        <Button color="green" size="lg" rightSection={<Icon.Play color="white"/>}>Play</Button>
                     </Link>
                 </Flex>)}
-                <Text ta="center" c="grey" mt="60" mb="100">That's all for now</Text>
+                <Divider mt="100" mb="0" label={<Text c="grey">That's all for now</Text>} size="xl"/>
+                <div className={'over-gradient bottom '+(showGradients.bottom ? '' : 'hide')}/>
+                <div className={'over-gradient top '+(showGradients.top ? '' : 'hide')}/>
             </ScrollArea.Autosize>
+            {/* <Flex style={{border:'1px solid #4444'}} w="100%" h="10%" align="center">
+                <Text ml="40">Made by Donato Modugno, 2026</Text>
+            </Flex> */}
         </Flex>
     </>
 }

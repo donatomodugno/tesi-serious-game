@@ -2,7 +2,7 @@ import { Flex, Button, Title, Divider } from '@mantine/core'
 import { Link } from 'react-router'
 import { Icon } from '../icons'
 
-function Navbar({logged=true}) {
+function Navbar({logged, setLogged}) {
     const buttons = [
         // {path: '/gameboard', text: 'Gameboard'},
         // {path: '/bpmn', text: 'BPMN'},
@@ -21,9 +21,19 @@ function Navbar({logged=true}) {
         ))}
         {logged ? <Button.Group>
             <Button variant="light" color="green">Loggedin as tiziocaio</Button>
-            <Button variant="filled" color="green" rightSection={<Icon.Logout color="white"/>}>Logout</Button>
+            <Button
+                variant="filled"
+                color="green"
+                rightSection={<Icon.Logout color="white"/>}
+                onClick={() => setLogged(false)}
+            >Logout</Button>
         </Button.Group>
-        : <Button variant="light" color="green">Login</Button>}
+        : <Button
+            variant="filled"
+            color="green"
+            rightSection={<Icon.User color="white"/>}
+            onClick={() => setLogged(true)}
+        >Login</Button>}
     </Flex>
 }
 

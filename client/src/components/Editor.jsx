@@ -1,13 +1,13 @@
-import '@mantine/core/styles.css'
-import './NewGame.css'
-import './Gameboard.css'
+import { useState, useEffect, useRef } from 'react'
+import { useParams } from 'react-router'
 import { Flex, ScrollArea, Table, Modal,
   Title, Text, Space, Button, Fieldset,
   TextInput, Input, InputBase, Slider, ActionIcon,
   Combobox, useCombobox, Tooltip, Transition } from '@mantine/core'
-import { useState, useEffect, useRef } from 'react'
-import { useParams } from 'react-router'
-import { Icon, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor } from '../icons'
+import '@mantine/core/styles.css'
+import './Editor.css'
+import './Gameboard.css'
+import { Icon, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor, iconMsgSend, iconMsgRecv, iconTimer, iconPool, iconLane } from '../icons'
 import API from '../API'
 
 const panels = ['20%', '40%', '20%']
@@ -26,13 +26,13 @@ const block_types_groups = [
     {value: 'gw-xor', label: <Flex align="center" gap="xs">{iconXor} Exclusive gateway</Flex>},
   ]},
   {group: 'Events', children: [
-    {value: 'ev-msg-s', label: 'Send message'},
-    {value: 'ev-msg-r', label: 'Receive message'},
-    {value: 'ev-timer', label: 'Timer/Delay'},
+    {value: 'ev-msg-s', label: <Flex align="center" gap="xs">{iconMsgSend} Send message</Flex>},
+    {value: 'ev-msg-r', label: <Flex align="center" gap="xs">{iconMsgRecv} Receive message</Flex>},
+    {value: 'ev-timer', label: <Flex align="center" gap="xs">{iconTimer} Timer/Delay</Flex>},
   ]},
   {group: 'Pools', children: [
-    {value: 'pool', label: 'Pool'},
-    {value: 'lane', label: 'Lane'},
+    {value: 'pool', label: <Flex align="center" gap="xs">{iconPool} Pool</Flex>},
+    {value: 'lane', label: <Flex align="center" gap="xs">{iconLane} Lane</Flex>},
   ]},
 ]
 
@@ -69,11 +69,8 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard, loadCards, 
 
   const deleteCard = async (key) => {
     await API.deleteCard(cards[key].id)
-    await loadCards()
+    setCards(cards.toSpliced(key, 1))
     setActiveCard(-1)
-    // const cards_tmp = [...cards]
-    // cards_tmp.splice(key, 1)
-    // setCards(cards_tmp)
   }
   
   useEffect(() => {
@@ -197,10 +194,10 @@ function EditBlock({blocks, setBlocks, index, allowDelete}) {
         </Combobox.Target>
         <Combobox.Dropdown>
           <Combobox.Options mah={200} style={{ overflowY: 'auto' }}>
-            {block_types_groups.map(({group, children}, k) => (
-              <Combobox.Group key={k} label={group} index={group}>
-                {children.map(({value, label}, k) => (
-                  <Combobox.Option key={k} value={value} index={value}>
+            {block_types_groups.map(({group, children}) => (
+              <Combobox.Group key={group} label={group}>
+                {children.map(({value, label}) => (
+                  <Combobox.Option key={value} value={value}>
                     {label}
                   </Combobox.Option>
                 ))}
@@ -244,32 +241,12 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
     setBlocks([...blocks, new_block])
   }
 
-  // const editBlock = async (key, new_block) => {
-  //   await API.editBlock({...blocks[key], c_id})
-  //   setBlocks(blocks.toSpliced(key, 1, new_block))
-  // }
-
-  // function editBlock(key, new_block) {
-    // const cards_tmp = [...cards]
-    // cards_tmp[activeCard].blocks[key] = new_block
-    // setCards(cards_tmp)
-  // }
-
-  // function deleteBlock(key) {
-    // const cards_tmp = [...cards]
-    // cards_tmp[activeCard].blocks.splice(key, 1)
-    // setCards(cards_tmp)
-  // }
-
   useEffect(() => {
     if(activeCard>=0 && activeCard<cards.length)
       loadBlocks()
   }, [activeCard])
   
   const handleTitleChange = ({currentTarget: {value}}) => {
-    // const cards_tmp = [...cards]
-    // cards_tmp[activeCard] = {...cards_tmp[activeCard], name: value}
-    // setCards(cards_tmp)
     setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], name: value}))
   }
 
@@ -278,9 +255,6 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
   }
 
   const handleCostChange = (value) => {
-    // const cards_tmp = [...cards]
-    // cards_tmp[activeCard].cost = value
-    // setCards(cards_tmp)
     setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], cost: value}))
   }
 
@@ -315,7 +289,7 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
             value={cards[activeCard].name}
             onChange={handleTitleChange}
             onBlur={handleTitleBlur}
-            maxLength="80"
+            maxLength="50"
           />
           <Input.Wrapper label="Cost">
             <Slider
@@ -360,7 +334,7 @@ function CardPreviewPanel({cards, activeCard}) {
     duration={400}
     exitDuration={0}
   >
-    {(s) => <Flex style={s} direction="column" gap="md" w={panels[2]} id="preview-panel">
+    {(s) => <Flex style={s} direction="column" gap="lg" w={panels[2]} id="preview-panel">
       <Title order={3}>Card preview</Title>
       <Flex id="card-preview" direction="column" justify="center" align="center" className="type-bpmn">
         <Text ta="center" fz="xl" p="20">{cards[activeCard]?.name}</Text>
@@ -396,7 +370,7 @@ function SettingsPanel({cards, activeCard, title, editTitle, deleteCards}) {
         error={!title && 'Title can\'t be empty'}
       />
       N. of cards: {cards.length}
-      <Fieldset legend="Danger zone" variant="filled">
+      <Fieldset legend={<Text fz="sm" fw={600}>Danger zone</Text>} variant="filled">
         <Button color="red" onClick={() => setOpenedModalDelete(true)}>Delete all cards</Button>
         <ModalDelete
           opened={openedModalDelete}
@@ -419,7 +393,7 @@ function SettingsPanel({cards, activeCard, title, editTitle, deleteCards}) {
   </Transition>
 }
 
-function NewGame({}) {
+function Editor({}) {
   const [title, setTitle] = useState('')
   const [cards, setCards] = useState([])
   const [activeCard, setActiveCard] = useState(-1)
@@ -427,7 +401,7 @@ function NewGame({}) {
 
   const editTitle = async (title) => {
     setTitle(title)
-    await API.editExercise({id, name: title})
+    await API.editExercise({id: ex_id, name: title})
   }
   
   const loadCards = async () => {
@@ -477,4 +451,4 @@ function NewGame({}) {
   </>
 }
 
-export default NewGame
+export default Editor
