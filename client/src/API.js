@@ -172,6 +172,14 @@ API.getUserInfo = async () => {
     }
 }
 
+API.getUserAuth = async () => {
+    const res = await fetch(BASE_URL+'/api/sessions/current', { credentials: 'include' })
+    const userInfo = await res.json()
+    if(res.ok) return true
+    else if(res.status==404) return false
+    else throw userInfo
+}
+
 
 
 export default API

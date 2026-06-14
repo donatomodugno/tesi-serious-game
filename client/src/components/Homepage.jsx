@@ -44,7 +44,7 @@ function Homepage({logged=true}) {
     }
 
     const newExercise = async () => {
-        setNewId(await API.createExercise({name: 'Exercise'}))
+        setNewId(await API.createExercise({name: 'Exercise', turns: 24}))
     }
 
     const deleteExercise = async (ex) => {
@@ -90,7 +90,7 @@ function Homepage({logged=true}) {
                     align="center"
                     justify="space-between"
                     gap="md"
-                    style={{backgroundColor:'hsl('+(180+k*30)+' 100 90)'}}
+                    style={{backgroundColor:'hsl('+/*(180+k*120)*//*120*/(180+k*30)+' 100 90)'}}
                 >
                     {logged && <Flex direction="row">
                         <Link to={"/edit/"+ex.id}>

@@ -1,6 +1,6 @@
 import { use, useState, useEffect } from 'react'
-import { useParams } from 'react-router'
-import { Flex, Box, Space, Title, Progress, RingProgress, List, ColorSwatch, Modal } from '@mantine/core'
+import { Link, useParams } from 'react-router'
+import { Flex, Box, Space, Title, Progress, RingProgress, List, ColorSwatch, Modal, Button } from '@mantine/core'
 import './Gameboard.css'
 import API from '../API'
 
@@ -8,9 +8,9 @@ const cards = {
   'V1': {y: 100, x: 200, type: 'bpmn', cost: 3, value: 1, title: '1 🧩'},
   'V3': {y: 100, x: 300, type: 'bpmn', cost: 5, value: 3, title: '3 🧩'},
   'V6': {y: 100, x: 400, type: 'bpmn', cost: 8, value: 6, title: '6 🧩'},
-  'M1': {y: 100, x: 500, type: 'money', cost: 0, bonus: 1, title: '1 🪙'},
-  'M2': {y: 100, x: 600, type: 'money', cost: 1, bonus: 2, title: '2 🪙'},
-  'M3': {y: 100, x: 700, type: 'money', cost: 2, bonus: 3, title: '3 🪙'},
+  'M1': {y: 100, x: 500, type: 'coins', cost: 0, bonus: 1, title: '1 🪙'},
+  'M2': {y: 100, x: 600, type: 'coins', cost: 1, bonus: 2, title: '2 🪙'},
+  'M3': {y: 100, x: 700, type: 'coins', cost: 2, bonus: 3, title: '3 🪙'},
   'A1': {y: 260, x: 200, type: 'action', cost: 2, bonus: +0, title: <>+1 🃏</>},
   'A2': {y: 260, x: 300, type: 'action', cost: 3, bonus: +0, title: <>+2 🃏</>},
   'A3': {y: 260, x: 400, type: 'action', cost: 5, bonus: +0, title: <>+1 🃏<br/>+1 🛒</>},
@@ -122,9 +122,9 @@ function GameView({}) {
   return <>
     <div id="game-bg">
       <div id="hud">
-        <span>Coins: {coins}🪙</span>
+        <span>Turns: {10-turns+1}/10✋🏻</span>
         <span>Buys: {buys}🛒</span>
-        <span>Turns: {turns}✋🏻</span>
+        <span>Available coins: {coins}🪙</span>
       </div>
       {Object.keys(cards).map((id, k) => <Card
         key={k}
@@ -174,44 +174,48 @@ function GameView({}) {
   </>
 }
 
-function ProgressPanel({progress=50}) {
+function ProgressPanel({logged, progress=50}) {
   const {id} = useParams()
-  return <Flex id="panel" h="100%" direction="column" gap="md">
-    <Title order={3}>Exercise: {id}</Title>
-    <Title size="md" order={3}>Your progress</Title>
-    <Progress.Root size="30">
-      <Progress.Section value={progress} color="green">
-        <Progress.Label>{progress}%</Progress.Label>
-      </Progress.Section>
-    </Progress.Root>
-    <Space h="xl"/>
-    <Title size="md" order={3}>Deck composition</Title>
-    <RingProgress
-      label={<Title ta="center">🃏</Title>}
-      sections={[
-        { value: 40, color: '#1AB' },
-        { value: 15, color: '#FC0' },
-        { value: 15, color: '#D48' },
-      ]}
-    />
-    <List>
-      <List.Item icon={<ColorSwatch color="#1AB" size={16}/>}>Actions</List.Item>
-      <List.Item icon={<ColorSwatch color="#FC0" size={16}/>}>Money</List.Item>
-      <List.Item icon={<ColorSwatch color="#D48" size={16}/>}>BPMN elements</List.Item>
-    </List>
-  </Flex>
+  return <>
+    <Modal opened={false} overlayProps={{backgroundOpacity: 0.5}}>Game finished!</Modal>
+    <Modal opened={false} overlayProps={{backgroundOpacity: 0.5}}>Next turn!</Modal>
+    <Flex id="panel" h="100%" direction="column" gap="sm">
+      <Title order={3}>Exercise: {id}</Title>
+      {logged && <Link to={'/edit/'+id}><Button w="100%" color="green">Edit exercise</Button></Link>}
+      <Title size="md" order={3} mt="30">Your progress</Title>
+      <Progress.Root size="30">
+        <Progress.Section value={progress} color="green">
+          <Progress.Label>{progress}%</Progress.Label>
+        </Progress.Section>
+      </Progress.Root>
+      <Title size="md" order={3} mt="30">Deck composition</Title>
+      <RingProgress
+        label={<Title ta="center">🃏</Title>}
+        sections={[
+          {value: 40, color: '#1AB'},
+          {value: 15, color: '#FC0'},
+          {value: 15, color: '#D48'},
+        ]}
+        mt="-10" mb="-5"
+      />
+      <List>
+        <List.Item icon={<ColorSwatch color="#1AB" size={16}/>}>Actions</List.Item>
+        <List.Item icon={<ColorSwatch color="#FC0" size={16}/>}>Coins</List.Item>
+        <List.Item icon={<ColorSwatch color="#D48" size={16}/>}>BPMN elements</List.Item>
+      </List>
+    </Flex>
+  </>
 }
 
-function Gameboard({}) {
+function Gameboard({logged}) {
   const SEP = 80 // 70
   return <>
-    <Modal opened={false} overlayProps={{backgroundOpacity:0.55,blur:3}}>Game finished!</Modal>
     <Flex h="100%">
       <Box w={SEP+"%"}>
         <GameView/>
       </Box>
       <Box w={100-SEP+"%"}>
-        <ProgressPanel/>
+        <ProgressPanel logged={logged}/>
       </Box>
     </Flex>
   </>

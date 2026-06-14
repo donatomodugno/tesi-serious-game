@@ -25,8 +25,8 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser((id, done) => {
     dao.getUserById(id)
-        .then(user => {done(null, user)})
-        .catch(err => {done(err, null)})
+        .then(user => done(null, user))
+        .catch(err => done(err, null))
 }) // TODO: INVERTIRE PASSPORT SETUP / EXPRESS SETUP; RIMUOVERE GRAFFE QUA SOPRA NELLE THEN E CATCH
 
 

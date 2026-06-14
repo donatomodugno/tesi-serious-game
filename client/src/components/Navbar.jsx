@@ -45,9 +45,15 @@ function ModalLogin({opened, close, login}) {
         let valid = true
         if(username === '' || !checkPassword(password)) valid=false
         if(valid) {
-            login(credentials)
+            try {
+                login(credentials)
+            }
+            catch(err) {
+                console.log('here')
+                setErrorMessage('Wrong username or password')
+            }
         } else {
-            setErrorMessage("Errors in the form")
+            setErrorMessage('Errors in the form')
         }
     }
 
@@ -149,8 +155,8 @@ function Navbar({logged, setLogged}) {
     const doLogin = async (credentials) => {
         try {
             const username = await API.login(credentials)
-            setLogged(true)
             const user = await API.getUserInfo()
+            setLogged(true)
             setModalOpened(false)
         } catch(err) {
             console.error(err.error)
@@ -168,11 +174,16 @@ function Navbar({logged, setLogged}) {
         // // console.log('user', user)
         // if(user.id) setLogged(true)
         // else setLogged(false)
+        // try {
+        //     const user = await API.getUserInfo()
+        //     setLogged(true)
+        // } catch(err) {
+        //     setLogged(false)
+        // }
         try {
-            const user = await API.getUserInfo()
-            setLogged(true)
+            setLogged(await API.getUserAuth())
         } catch(err) {
-            setLogged(false)
+            throw err
         }
     }
 
@@ -193,7 +204,10 @@ function Navbar({logged, setLogged}) {
         />
         <Flex gap="sm" id="navbar">
             <Link to="/home" id="nav-title">
-                <Title order={2} c="#005">BPMN BattleCards</Title>
+                <Flex ml="5">
+                    <Icon.Logo size="35" stroke="#005"/>
+                    <Title order={2} c="#005" ml="6">BPMN BattleCards</Title>
+                </Flex>
             </Link>
             <Divider orientation="vertical" />
             {logged ? <Button.Group>

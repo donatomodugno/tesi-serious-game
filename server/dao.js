@@ -3,9 +3,14 @@ import bcrypt from 'bcrypt'
 
 // ALGED Add List Get Edit Delete (non esiste, l'ho inventato io)
 
-const db = new sqlite.Database('bpmn-game.db', (err) => {
+const db = new sqlite.Database('db.sqlite', (err) => {
     if(err) throw err
     else {
+        const catchError = (err) => {
+            if(err) {
+                console.error('Error while creating table: ', err.message)
+            }
+        }
         db.serialize(() => {
             db.run(`
                 CREATE TABLE IF NOT EXISTS users(
@@ -14,11 +19,7 @@ const db = new sqlite.Database('bpmn-game.db', (err) => {
                     email TEXT NOT NULL UNIQUE,
                     hash TEXT NOT NULL
                 )
-            `, (err) => {
-                if(err) {
-                    console.error('Error while creating table: ', err.message)
-                }
-            })
+            `, catchError)
             // Hashed password: "ciao"
             db.run(`
                 INSERT OR IGNORE INTO users VALUES(?,?,?,?)
@@ -27,33 +28,23 @@ const db = new sqlite.Database('bpmn-game.db', (err) => {
                 'tiziocaio',
                 'sopralapanca@email.com',
                 '$2a$12$3EF8YyXlrap6FaNyx910huccO30532LczCNPBfBBAhy5CtLkaLXHy'
-            ], (err) => {
-                if(err) {
-                    console.error('Error while creating table: ', err.message)
-                }
-            })
+            ], catchError)
             db.run(`
                 CREATE TABLE IF NOT EXISTS exercises(
                     id INTEGER PRIMARY KEY,
-                    name TEXT NOT NULL
+                    name TEXT NOT NULL,
+                    turns INTEGER NOT NULL
                 )
-            `, (err) => {
-                if(err) {
-                    console.error('Error while creating table: ', err.message)
-                }
-            })
+            `, catchError)
             db.run(`
                 CREATE TABLE IF NOT EXISTS cards(
                     id INTEGER PRIMARY KEY,
                     ex_id INTEGER NOT NULL,
                     name TEXT NOT NULL,
+                    type TEXT NOT NULL,
                     cost INTEGER NOT NULL
                 )
-            `, (err) => {
-                if(err) {
-                    console.error('Error while creating table: ', err.message)
-                }
-            })
+            `, catchError)
             db.run(`
                 CREATE TABLE IF NOT EXISTS blocks(
                     id INTEGER PRIMARY KEY,
@@ -61,11 +52,7 @@ const db = new sqlite.Database('bpmn-game.db', (err) => {
                     type TEXT NOT NULL,
                     text TEXT
                 )
-            `, (err) => {
-                if(err) {
-                    console.error('Error while creating table: ', err.message)
-                }
-            })
+            `, catchError)
         })
     }
 })
@@ -140,8 +127,8 @@ exports.getExercise = (id) => {
 
 exports.addExercise = (exer) => {
     return new Promise((resolve, reject) => {
-        const sql = "INSERT INTO exercises(name) VALUES(?)"
-        db.run(sql, [exer.name], function (err) {
+        const sql = "INSERT INTO exercises(name,turns) VALUES(?,?)"
+        db.run(sql, [exer.name, exer.turns], function (err) {
             if(err) {
                 reject(err)
                 return
@@ -153,8 +140,8 @@ exports.addExercise = (exer) => {
 
 exports.editExercise = (exer) => {
     return new Promise((resolve, reject) => {
-        const sql = "UPDATE exercises SET name=? WHERE id=?"
-        db.run(sql, [exer.name, exer.id], (err) => {
+        const sql = "UPDATE exercises SET name=?,turns=? WHERE id=?"
+        db.run(sql, [exer.name, exer.turns, exer.id], (err) => {
             if(err) {
                 reject(err)
                 return
@@ -222,8 +209,8 @@ exports.getCard = (id) => {
 
 exports.addCard = (card) => {
     return new Promise((resolve, reject) => {
-        const sql = "INSERT INTO cards(ex_id,name,cost) VALUES(?,?,?)"
-        db.run(sql, [card.ex_id, card.name, card.cost], function (err) {
+        const sql = "INSERT INTO cards(ex_id,name,type,cost) VALUES(?,?,?,?)"
+        db.run(sql, [card.ex_id, card.name, card.type, card.cost], function (err) {
             if(err) {
                 reject(err)
                 return
@@ -235,8 +222,8 @@ exports.addCard = (card) => {
 
 exports.editCard = (card) => {
     return new Promise((resolve, reject) => {
-        const sql = "UPDATE cards SET name=?,cost=? WHERE id=?"
-        db.run(sql, [card.name, card.cost, card.id], (err) => {
+        const sql = "UPDATE cards SET name=?,type=?,cost=? WHERE id=?"
+        db.run(sql, [card.name, card.type, card.cost, card.id], (err) => {
             if(err) {
                 reject(err)
                 return

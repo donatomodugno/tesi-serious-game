@@ -16,7 +16,7 @@ function App() {
         <Routes>
           <Route path="*" element={<Navigate to="/home"/>}/>
           <Route path="/home" element={<Homepage logged={logged}/>}/>
-          <Route path="/play/:id" element={<Gameboard/>}/>
+          <Route path="/play/:id" element={<Gameboard logged={logged}/>}/>
           <Route path="/edit/:id" element={logged ? <Editor/> : <Navigate to="/home"/>}/>
           {/* <Route path="/bpmn" element={<BPMN/>}/> */}
         </Routes>

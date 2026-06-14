@@ -60,8 +60,9 @@
     width: 200px;
     height: 280px;
     /* outline: 8px solid #FAFACC; */
-    border: 8px solid #FAFACC;
+    border: 8px solid white;
     border-radius: 20px;
+    box-shadow: 0px 0px 20px 2px grey;
     user-select: none;
     overflow-wrap: break-word;
     word-break: break-word;
