@@ -1,6 +1,6 @@
 import Navbar from './Navbar'
-import Exercises from './Exercises'
+import Homepage from './Homepage'
 import Gameboard from './Gameboard'
 import Editor from './Editor'
 
-export { Navbar, Exercises, Gameboard, Editor }
+export { Navbar, Homepage, Gameboard, Editor }

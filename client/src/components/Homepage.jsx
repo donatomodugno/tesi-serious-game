@@ -33,10 +33,10 @@ function ModalDelete({opened, close, confirm}) {
     </Modal>
 }
 
-function Exercises({logged=true}) {
+function Homepage({logged=true}) {
     const [newId, setNewId] = useState(null)
-    const [exerciseToDelete, setExerciseToDelete] = useState(null)
     const [exercises, setExercises] = useState([])
+    const [exerciseToDelete, setExerciseToDelete] = useState(null)
     const [showGradients, setShowGradients] = useState({top: false, bottom: false})
 
     const loadExercises = async () => {
@@ -89,25 +89,24 @@ function Exercises({logged=true}) {
                     className="exercise-item"
                     align="center"
                     justify="space-between"
+                    gap="md"
                     style={{backgroundColor:'hsl('+(180+k*30)+' 100 90)'}}
                 >
-                    <span>
-                        {logged && <>
-                            <Link to={"/edit/"+ex.id}>
-                                <Button
-                                    color="green"
-                                    leftSection={<Icon.Edit color="white"/>}
-                                >Edit</Button>
-                            </Link>
+                    {logged && <Flex direction="row">
+                        <Link to={"/edit/"+ex.id}>
                             <Button
-                                ml="10"
-                                color="red"
-                                onClick={() => setExerciseToDelete(ex)}
-                                leftSection={<Icon.Delete color="white"/>}
-                            >Delete</Button>
-                        </>}
-                    </span>
-                    <Text fz={28}>{ex.name}</Text>
+                                color="green"
+                                leftSection={<Icon.Edit color="white"/>}
+                            >Edit</Button>
+                        </Link>
+                        <Button
+                            ml="10"
+                            color="red"
+                            onClick={() => setExerciseToDelete(ex)}
+                            leftSection={<Icon.Delete color="white"/>}
+                        >Delete</Button>
+                    </Flex>}
+                    <Text fz={28} w="100%" ml="20">{ex.name}</Text>
                     <Link to={"/play/"+k}>
                         <Button color="green" size="lg" rightSection={<Icon.Play color="white"/>}>Play</Button>
                     </Link>
@@ -123,4 +122,4 @@ function Exercises({logged=true}) {
     </>
 }
 
-export default Exercises
+export default Homepage

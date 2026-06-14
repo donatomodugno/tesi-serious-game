@@ -1,14 +1,39 @@
 import sqlite from 'sqlite3'
+import bcrypt from 'bcrypt'
 
-// CLRUD Create List Read Update Delete
-// ALGER Add List Get Edit Remove
+// ALGED Add List Get Edit Delete (non esiste, l'ho inventato io)
 
 const db = new sqlite.Database('bpmn-game.db', (err) => {
     if(err) throw err
     else {
         db.serialize(() => {
             db.run(`
-                CREATE TABLE IF NOT EXISTS exercises (
+                CREATE TABLE IF NOT EXISTS users(
+                    id INTEGER PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    email TEXT NOT NULL UNIQUE,
+                    hash TEXT NOT NULL
+                )
+            `, (err) => {
+                if(err) {
+                    console.error('Error while creating table: ', err.message)
+                }
+            })
+            // Hashed password: "ciao"
+            db.run(`
+                INSERT OR IGNORE INTO users VALUES(?,?,?,?)
+            `, [
+                1,
+                'tiziocaio',
+                'sopralapanca@email.com',
+                '$2a$12$3EF8YyXlrap6FaNyx910huccO30532LczCNPBfBBAhy5CtLkaLXHy'
+            ], (err) => {
+                if(err) {
+                    console.error('Error while creating table: ', err.message)
+                }
+            })
+            db.run(`
+                CREATE TABLE IF NOT EXISTS exercises(
                     id INTEGER PRIMARY KEY,
                     name TEXT NOT NULL
                 )
@@ -18,7 +43,7 @@ const db = new sqlite.Database('bpmn-game.db', (err) => {
                 }
             })
             db.run(`
-                CREATE TABLE IF NOT EXISTS cards (
+                CREATE TABLE IF NOT EXISTS cards(
                     id INTEGER PRIMARY KEY,
                     ex_id INTEGER NOT NULL,
                     name TEXT NOT NULL,
@@ -30,7 +55,7 @@ const db = new sqlite.Database('bpmn-game.db', (err) => {
                 }
             })
             db.run(`
-                CREATE TABLE IF NOT EXISTS blocks (
+                CREATE TABLE IF NOT EXISTS blocks(
                     id INTEGER PRIMARY KEY,
                     c_id INTEGER NOT NULL,
                     type TEXT NOT NULL,
@@ -46,6 +71,42 @@ const db = new sqlite.Database('bpmn-game.db', (err) => {
 })
 
 const exports = {}
+
+
+
+// USER (DAO)
+
+exports.getUserById = (id) => {
+    return new Promise((resolve, reject) => {
+        const sql = "SELECT * FROM users WHERE id=?"
+        db.get(sql, [id], (err, row) => {
+            if(err) {
+                reject(err)
+                return
+            }
+            // da fare nel server.js -> else if(row===undefined) resolve({error:'User not found'});
+            else if(row===undefined) resolve({error: 'User not found'})
+            resolve(row)
+        })
+    })
+}
+
+exports.getUser = (email, password) => {
+    return new Promise((resolve, reject) => {
+        const sql = "SELECT * FROM users WHERE email=?"
+        db.get(sql, [email], (err, row) => {
+            if(err) {
+                reject(err)
+                return
+            }
+            else if(row===undefined) resolve(false)
+            bcrypt.compare(password, row.hash).then(result => {
+                if(result) resolve(row)
+                else resolve(false)
+            })
+        })
+    })
+}
 
 
 
@@ -306,4 +367,4 @@ exports.deleteCardBlocks = (c_id) => {
     })
 }
 
-export default {...exports}
+export default exports

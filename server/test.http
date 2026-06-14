@@ -23,6 +23,10 @@ GET http://localhost:3001/api/exercise/1 HTTP/1.1
 
 ###
 
+GET http://localhost:3001/api/exercise/1000 HTTP/1.1
+
+###
+
 POST http://localhost:3001/api/exercise HTTP/1.1
 content-type: application/json
 

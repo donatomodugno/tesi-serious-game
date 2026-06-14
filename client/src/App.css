@@ -24,14 +24,14 @@ body {
 
 #exercises-list .over-gradient.bottom {
     bottom: 0;
-    /* background: linear-gradient(#0000 90%, #5559); */
-    background: radial-gradient(55% 10% at 50% 100%, #5555, #0000);
+    /* background: radial-gradient(55% 10% at 50% 100%, #5559, #0000); */
+    background: radial-gradient(55% 3% at 50% 100%, #5559, #0000);
 }
 
 #exercises-list .over-gradient.top {
     top: 0;
-    /* background: linear-gradient(#0000 90%, #555); */
-    background: radial-gradient(55% 10% at 50% 0%, #5555, #0000);
+    /* background: radial-gradient(55% 10% at 50% 0%, #5559, #0000); */
+    background: radial-gradient(55% 3% at 50% 0%, #5559, #0000);
 }
 
 #exercises-list .over-gradient.hide {

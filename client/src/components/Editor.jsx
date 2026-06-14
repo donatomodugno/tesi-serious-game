@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams } from 'react-router'
+import { useParams, Navigate } from 'react-router'
 import { Flex, ScrollArea, Table, Modal,
   Title, Text, Space, Button, Fieldset,
   TextInput, Input, InputBase, Slider, ActionIcon,
-  Combobox, useCombobox, Tooltip, Transition } from '@mantine/core'
+  Combobox, useCombobox, Tooltip, Transition, 
+  Loader} from '@mantine/core'
 import '@mantine/core/styles.css'
 import './Editor.css'
 import './Gameboard.css'
-import { Icon, iconTask, iconManual, iconUser, iconService, iconAnd, iconOr, iconXor, iconMsgSend, iconMsgRecv, iconTimer, iconPool, iconLane } from '../icons'
+import { Icon, bpmn_icon } from '../icons'
 import API from '../API'
 
 const panels = ['20%', '40%', '20%']
@@ -15,24 +16,24 @@ const new_card = {name: 'Card', cost: 1}
 const new_block = {type: 'task', text: 'New block'}
 const block_types_groups = [
   {group: 'Tasks', children: [
-    {value: 'task', label: <Flex align="center" gap="xs">{iconTask} Task</Flex>},
-    {value: 'task-m', label: <Flex align="center" gap="xs">{iconManual} Manual task</Flex>},
-    {value: 'task-u', label: <Flex align="center" gap="xs">{iconUser} User task</Flex>},
-    {value: 'task-s', label: <Flex align="center" gap="xs">{iconService} Service task</Flex>},
+    {value: 'task', label: <Flex align="center" gap="xs">{bpmn_icon.Task} Task</Flex>},
+    {value: 'task-m', label: <Flex align="center" gap="xs">{bpmn_icon.Manual} Manual task</Flex>},
+    {value: 'task-u', label: <Flex align="center" gap="xs">{bpmn_icon.User} User task</Flex>},
+    {value: 'task-s', label: <Flex align="center" gap="xs">{bpmn_icon.Service} Service task</Flex>},
   ]},
   {group: 'Gateways', children: [
-    {value: 'gw-and', label: <Flex align="center" gap="xs">{iconAnd} Parallel gateway</Flex>},
-    {value: 'gw-or', label: <Flex align="center" gap="xs">{iconOr} Inclusive gateway</Flex>},
-    {value: 'gw-xor', label: <Flex align="center" gap="xs">{iconXor} Exclusive gateway</Flex>},
+    {value: 'gw-and', label: <Flex align="center" gap="xs">{bpmn_icon.And} Parallel gateway</Flex>},
+    {value: 'gw-or', label: <Flex align="center" gap="xs">{bpmn_icon.Or} Inclusive gateway</Flex>},
+    {value: 'gw-xor', label: <Flex align="center" gap="xs">{bpmn_icon.Xor} Exclusive gateway</Flex>},
   ]},
   {group: 'Events', children: [
-    {value: 'ev-msg-s', label: <Flex align="center" gap="xs">{iconMsgSend} Send message</Flex>},
-    {value: 'ev-msg-r', label: <Flex align="center" gap="xs">{iconMsgRecv} Receive message</Flex>},
-    {value: 'ev-timer', label: <Flex align="center" gap="xs">{iconTimer} Timer/Delay</Flex>},
+    {value: 'ev-msg-s', label: <Flex align="center" gap="xs">{bpmn_icon.MsgSend} Send message</Flex>},
+    {value: 'ev-msg-r', label: <Flex align="center" gap="xs">{bpmn_icon.MsgRecv} Receive message</Flex>},
+    {value: 'ev-timer', label: <Flex align="center" gap="xs">{bpmn_icon.Timer} Timer/Delay</Flex>},
   ]},
   {group: 'Pools', children: [
-    {value: 'pool', label: <Flex align="center" gap="xs">{iconPool} Pool</Flex>},
-    {value: 'lane', label: <Flex align="center" gap="xs">{iconLane} Lane</Flex>},
+    {value: 'pool', label: <Flex align="center" gap="xs">{bpmn_icon.Pool} Pool</Flex>},
+    {value: 'lane', label: <Flex align="center" gap="xs">{bpmn_icon.Lane} Lane</Flex>},
   ]},
 ]
 
@@ -397,6 +398,7 @@ function Editor({}) {
   const [title, setTitle] = useState('')
   const [cards, setCards] = useState([])
   const [activeCard, setActiveCard] = useState(-1)
+  const [page, setPage] = useState('loading')
   const ex_id = useParams().id
 
   const editTitle = async (title) => {
@@ -423,7 +425,12 @@ function Editor({}) {
   }
 
   const loadTitle = async() => {
-    setTitle((await API.getExercise(ex_id)).name)
+    const ex = await API.getExercise(ex_id)
+    if(!ex) setPage('invalid')
+    else {
+      setPage('loaded')
+      setTitle(ex.name)
+    }
   }
 
   useEffect(() => {
@@ -431,23 +438,31 @@ function Editor({}) {
   }, [])
 
   return <>
-    <Flex direction="row" h="92%" gap="60">
-      <CardsListPanel
-        cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}
-        loadCards={loadCards} createCard={createCard} title={title}
-      />
-      <CardEditPanel
-        cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}
-        saveCard={saveCard}
-      />
-      <CardPreviewPanel
-        cards={cards} activeCard={activeCard}
-      />
-      <SettingsPanel
-        cards={cards} activeCard={activeCard}
-        deleteCards={deleteCards} title={title} editTitle={editTitle}
-      />
-    </Flex>
+    {page=='invalid' && <Navigate to="/"/>}
+    {page=='loading' && <>
+      <Flex w="100%" h="100%" justify="center" align="center">
+        <Loader color="green" size="xl"/>
+      </Flex>
+    </>}
+    {page=='loaded' && <>
+      <Flex direction="row" h="92%" gap="60">
+        <CardsListPanel
+          cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}
+          loadCards={loadCards} createCard={createCard} title={title}
+        />
+        <CardEditPanel
+          cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}
+          saveCard={saveCard}
+        />
+        <CardPreviewPanel
+          cards={cards} activeCard={activeCard}
+        />
+        <SettingsPanel
+          cards={cards} activeCard={activeCard}
+          deleteCards={deleteCards} title={title} editTitle={editTitle}
+        />
+      </Flex>
+    </>}
   </>
 }
 

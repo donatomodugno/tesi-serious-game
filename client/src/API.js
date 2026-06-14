@@ -4,13 +4,13 @@ async function request(method, path, body) {
     try {
         const res = await fetch(BASE_URL+path, {
             method: method,
-            // credentials: 'include',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(body),
         })
-        let obj
+        let obj = {status: res.status}
         const type = res.headers.get('content-type')
         if(type && type.indexOf('application/json')!==-1) {
             obj = await res.json()
@@ -19,6 +19,8 @@ async function request(method, path, body) {
         }
         if(res.ok) {
             return obj
+        } else if(res.status==404) {
+            return {status: res.status}
         } else {
             throw obj
         }
@@ -50,7 +52,8 @@ API.getExercises = async () => {
 }
 
 API.getExercise = async (id) => {
-    return await get('/api/exercise/'+id)
+    const res = await get('/api/exercise/'+id)
+    return res.status==404 ? null : res
 }
 
 API.createExercise = async (exer) => {
@@ -127,4 +130,48 @@ API.deleteBlock = async (id) => {
 
 
 
-export default {...API}
+// USER (API)
+
+API.getUserById = async (id) => {
+    const res = await fetch(BASE_URL+'/api/user/'+id, { credentials: 'include' })
+    const user = await res.json()
+    if(res.ok) return user
+    else throw user
+}
+
+API.login = async (credentials) => {
+    const res = await fetch(BASE_URL+'/api/sessions', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+    })
+    if(res.ok) {
+        const user = await res.json()
+        return user.name
+    }
+    else {
+        const errDetail = await res.json()
+        throw errDetail.message
+    }
+}
+
+API.logout = async () => {
+    await fetch(BASE_URL+'/api/sessions/current', {method: 'DELETE', credentials: 'include'})
+}
+
+API.getUserInfo = async () => {
+    const res = await fetch(BASE_URL+'/api/sessions/current', { credentials: 'include' })
+    const userInfo = await res.json()
+    if(res.ok) {
+        return userInfo
+    } else {
+        throw userInfo
+    }
+}
+
+
+
+export default API
