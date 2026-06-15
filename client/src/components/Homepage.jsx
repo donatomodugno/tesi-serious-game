@@ -4,6 +4,8 @@ import { Flex, Box, Modal, Title, Text, Button, ScrollArea, Divider } from '@man
 import { Icon } from '../icons'
 import API from '../API'
 
+const new_exercise = {name: 'Exercise', turns: 24}
+
 function ModalDelete({opened, close, confirm}) {
     return <Modal
         opened={opened}
@@ -44,7 +46,7 @@ function Homepage({logged=true}) {
     }
 
     const newExercise = async () => {
-        setNewId(await API.createExercise({name: 'Exercise', turns: 24}))
+        setNewId(await API.createExercise(new_exercise))
     }
 
     const deleteExercise = async (ex) => {
@@ -66,7 +68,7 @@ function Homepage({logged=true}) {
                 setExerciseToDelete()
             }}
         />
-        <Flex h="92%" justify="flex-start" gap="sm" /* justify="end" */ direction="column" align="center">
+        <Flex h="92%" justify="flex-start" gap="sm" direction="column" align="center">
             <Title mt="2.75rem">BPMN BattleCards</Title>
             <Title order={3}>Choose an exercise {logged && <>
                 or <Button color="green" onClick={newExercise}>Create a new exercise</Button>
@@ -107,8 +109,8 @@ function Homepage({logged=true}) {
                         >Delete</Button>
                     </Flex>}
                     <Text fz={28} w="100%" ml="20">{ex.name}</Text>
-                    <Link to={"/play/"+k}>
-                        <Button color="green" size="lg" rightSection={<Icon.Play color="white"/>}>Play</Button>
+                    <Link to={'/play/'+exercises[k].id}>
+                        <Button color="green" size="lg" rightSection={<Icon.Play color="white" size="30"/>}>Play</Button>
                     </Link>
                 </Flex>)}
                 <Divider mt="100" mb="0" label={<Text c="grey">That's all for now</Text>} size="xl"/>

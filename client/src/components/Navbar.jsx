@@ -170,20 +170,10 @@ function Navbar({logged, setLogged}) {
     }
 
     const checkAuth = async () => {
-        // const user = await API.getUserInfo()
-        // // console.log('user', user)
-        // if(user.id) setLogged(true)
-        // else setLogged(false)
-        // try {
-        //     const user = await API.getUserInfo()
-        //     setLogged(true)
-        // } catch(err) {
-        //     setLogged(false)
-        // }
         try {
             setLogged(await API.getUserAuth())
         } catch(err) {
-            throw err
+            setLogged(false)
         }
     }
 

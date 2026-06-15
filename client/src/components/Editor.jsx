@@ -4,7 +4,7 @@ import { Flex, ScrollArea, Table, Modal,
   Title, Text, Space, Button, Fieldset,
   TextInput, Input, InputBase, Slider, ActionIcon,
   Combobox, useCombobox, Tooltip, Transition, 
-  Loader, SegmentedControl} from '@mantine/core'
+  Loader, SegmentedControl, NumberInput } from '@mantine/core'
 import '@mantine/core/styles.css'
 import './Editor.css'
 import './Gameboard.css'
@@ -12,7 +12,7 @@ import { Icon, bpmn_icon } from '../icons'
 import API from '../API'
 
 const panels = ['20%', '40%', '20%']
-const new_card = {name: 'Card', type: 'bpmn', cost: 1}
+const new_card = {name: 'Card', type: 'bpmn', cost: 1, bonus: 0, draws: 0, buys: 0, turns: 0}
 const new_block = {type: 'task', text: 'New block'}
 const block_types_groups = [
   {group: 'Tasks', children: [
@@ -97,7 +97,7 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard, loadCards, 
       text="Are you sure to delete this card?"
     />
     <Flex id="list-panel" direction="column" gap="lg" w={panels[0]} h="100%">
-      <Title ta="center" order={3} py="10" id="title" onClick={() => setActiveCard(-1)}>{title || '<Untitled>'}</Title>
+      <Title ta="center" order={3} py="8" mb="20" id="title" onClick={() => setActiveCard(-1)}>{title || '<Untitled>'}</Title>
       <Button color="green" h="45" onClick={addCard} leftSection={<Icon.PlusCard color="white"/>}>Add card</Button>
       <ScrollArea.Autosize h="100%" mah="100%" type="always" scrollbars="y" offsetScrollbars="present">
         <Table verticalSpacing="sm" striped={false} highlightOnHover withTableBorder={false}>
@@ -254,18 +254,27 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
     await saveCard()
   }
 
-  const handleCostChange = (value) => {
-    setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], cost: value}))
-  }
-
-  const handleCostChangeEnd = async (value) => { // Just to prevent too many requests
-    await saveCard()
-  }
-
   const handleTypeChange = async (value) => {
     setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], type: value}))
     // Non posso usare "await saveCard()" perché va in concorrenza con la set dello stato
     await API.editCard({...cards[activeCard], type: value})
+  }
+
+  const handleCostChange = (value) => {
+    setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], cost: value}))
+  }
+
+  const handleCostChangeEnd = async (value) => {
+    await saveCard()
+  }
+  // Change and ChangeEnd events written separate just to prevent too many requests
+
+  const handleBonusChange = (value) => {
+    setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], bonus: value}))
+  }
+
+  const handleBonusChangeEnd = async (value) => {
+    await saveCard()
   }
 
   return <Transition
@@ -293,9 +302,9 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
               value={cards[activeCard].type||'bpmn'}
               onChange={handleTypeChange}
               data={[
-                { label: 'BPMN', value: 'bpmn' },
-                { label: 'Action', value: 'action' },
-                { label: 'Coins', value: 'coins' },
+                {label: 'BPMN', value: 'bpmn'},
+                {label: 'Action', value: 'action'},
+                {label: 'Coins', value: 'coins'},
               ]}
               color={
                 cards[activeCard].type=='bpmn' && '#E47' ||
@@ -315,32 +324,108 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
             onBlur={handleTitleBlur}
             maxLength="50"
           />
-          <Input.Wrapper label="Cost">
-            <Slider
-              domain={[0.9, 4.1]}
-              min={1}
-              max={4}
-              step={1}
-              marks={[1, 2, 3, 4].map(v => ({value: v, label: v}))}
-              size="lg"
-              color="green"
-              label={null}
-              value={cards[activeCard].cost}
-              onChange={handleCostChange}
-              onChangeEnd={handleCostChangeEnd}
-            />
-          </Input.Wrapper>
-          <Space />
-          {blocks.map((b, k) => (
-            <EditBlock
-              key={k}
-              blocks={blocks}
-              setBlocks={setBlocks}
-              index={k}
-              allowDelete={blocks.length>1}
-            />
-          ))}
-          <Button color="green" mb="20" onClick={addBlock} leftSection={<Icon.PlusBlock color="white"/>}>Add block</Button>
+          {cards[activeCard].type=='bpmn' && <>
+            <Input.Wrapper label="Cost">
+              <Slider
+                domain={[0.9, 4.1]}
+                min={1}
+                max={4}
+                step={1}
+                marks={[1, 2, 3, 4].map(v => ({value: v, label: v}))}
+                size="lg"
+                color="green"
+                label={null}
+                value={cards[activeCard].cost}
+                onChange={handleCostChange}
+                onChangeEnd={handleCostChangeEnd}
+              />
+            </Input.Wrapper>
+            <Space/>
+            {blocks.map((b, k) => (
+              <EditBlock
+                key={k}
+                blocks={blocks}
+                setBlocks={setBlocks}
+                index={k}
+                allowDelete={blocks.length>1}
+              />
+            ))}
+            <Button color="green" mb="20" onClick={addBlock} leftSection={<Icon.PlusBlock color="white"/>}>Add block</Button>
+          </>}
+          {cards[activeCard].type=='action' && <>
+            <Input.Wrapper label="Cost">
+              <Slider
+                domain={[0.9, 4.1]}
+                min={1}
+                max={4}
+                step={1}
+                marks={[1, 2, 3, 4].map(v => ({value: v, label: v}))}
+                size="lg"
+                color="green"
+                label={null}
+                value={cards[activeCard].cost}
+                onChange={handleCostChange}
+                onChangeEnd={handleCostChangeEnd}
+              />
+            </Input.Wrapper>
+            <Input.Wrapper
+              label={'Bonus (or malus): '+cards[activeCard].bonus}
+              mt="20"
+            >
+              <Slider
+                // domain={[-2, 3]}
+                min={-2}
+                max={3}
+                step={1}
+                marks={[-2, -1, 0, 1, 2, 3].map(v => ({value: v, label: v}))}
+                startPointValue={0}
+                size="lg"
+                color={cards[activeCard].bonus<0 ? 'red' : 'green'}
+                label={null}
+                value={cards[activeCard].bonus}
+                onChange={handleBonusChange}
+                onChangeEnd={handleBonusChangeEnd}
+              />
+            </Input.Wrapper>
+            <Flex gap="xl" mt="20">
+              <NumberInput
+                label="Add draws (0-2)"
+                size="xl"
+                labelProps={{fz: 'sm'}}
+                leftSection={<Text fz="30">🃏</Text>}
+                min={0}
+                max={2}
+                value={cards[activeCard].draws}
+                onChange={(value) => setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], draws: value}))}
+                onBlur={async () => { await saveCard() }}
+              />
+              <NumberInput
+                label="Add buys (0-2)"
+                size="xl"
+                labelProps={{fz: 'sm'}}
+                leftSection={<Text fz="30">🛒</Text>}
+                min={0}
+                max={2}
+                value={cards[activeCard].buys}
+                onChange={(value) => setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], buys: value}))}
+                onBlur={async () => { await saveCard() }}
+              />
+              <NumberInput
+                label="Add turns (0-1)"
+                size="xl"
+                labelProps={{fz: 'sm'}}
+                leftSection={<Text fz="30">✋🏻</Text>}
+                min={0}
+                max={1}
+                value={cards[activeCard].turns}
+                onChange={(value) => setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], turns: value}))}
+                onBlur={async () => { await saveCard() }}
+              />
+            </Flex>
+          </>}
+          {cards[activeCard].type=='coins' && <>
+            <Text c="grey">For this type of card the editor is not available yet!</Text>
+          </>}
         </Flex>}
       </ScrollArea>
     </Flex>}
@@ -357,21 +442,28 @@ function CardPreviewPanel({cards, activeCard}) {
   >
     {(s) => <Flex style={s} direction="column" align="center" gap="lg" w={panels[2]} id="preview-panel">
       <Title order={3} mb="20">Card preview</Title>
-      <Flex
+      {cards[activeCard] && <Flex
         direction="column" justify="center" align="center"
-        id="card-preview" className={'type-'+cards[activeCard]?.type}
+        id="card-preview" className={'type-'+cards[activeCard].type}
       >
-        <Text ta="center" fz="xl" p="20">{cards[activeCard]?.name}</Text>
-        <Text ta="center" fz="xl" p="20">{cards[activeCard]?.cost+'🪙'}</Text>
-      </Flex>
+        {cards[activeCard].type!='coins' && <Text ta="center" fz="xl" p="20">{cards[activeCard].name}</Text>}
+        {cards[activeCard].type=='action' && <>
+          {cards[activeCard].draws>0 && <Text ta="center" fz="xl">+{cards[activeCard].draws}🃏</Text>}
+          {cards[activeCard].buys>0 && <Text ta="center" fz="xl">+{cards[activeCard].buys}🛒</Text>}
+          {cards[activeCard].turns>0 && <Text ta="center" fz="xl">+{cards[activeCard].turns}✋🏻</Text>}
+          {cards[activeCard].bonus>=0 && <Text ta="center" fz="xl" c="green">[+{cards[activeCard].bonus}]</Text>}
+          {cards[activeCard].bonus<0 && <Text ta="center" fz="xl" c="red">[{cards[activeCard].bonus}]</Text>}
+        </>}
+        <Text ta="center" fz="xl" p="20">{cards[activeCard].cost+'🪙'}</Text>
+      </Flex>}
       {/* <Button onClick={() => console.log(cards)}>log cards</Button> */}
     </Flex>}
   </Transition>
 }
 
-function SettingsPanel({cards, activeCard, title, editTitle, deleteCards}) {
+function SettingsPanel({exercise, setExercise, cards, activeCard, deleteCards}) {
   const [openedModalDelete, setOpenedModalDelete] = useState(false)
-  const [turns, setTurns] = useState(24)
+  // const [turns, setTurns] = useState(24)
   const [difficulty, setDifficulty] = useState({})
 
   useEffect(() => {
@@ -382,17 +474,26 @@ function SettingsPanel({cards, activeCard, title, editTitle, deleteCards}) {
       {min: 27, max: 30, label: 'Easy', color: 'green'},
     ]
     for(let d of turnsDifficulties) {
-      if(turns>=d.min && turns<=d.max) {
+      if(exercise.turns>=d.min && exercise.turns<=d.max) {
         setDifficulty(d)
       }
     }
-  }, [turns])
+  }, [exercise.turns])
 
   const handleTitleChange = ({currentTarget: {value}}) => {
-    editTitle(value)
+    setExercise({...exercise, name: value})
   }
 
-  const handleTurnsChangeEnd = async (value) => {}
+  const handleTitleBlur = async () => {
+    await API.editExercise(exercise)
+  }
+
+  const handleTurnsChange = (value) => {
+    setExercise({...exercise, turns: value})
+  }
+  const handleTurnsChangeEnd = async (value) => {
+    await API.editExercise(exercise)
+  }
 
   return <Transition
     mounted={activeCard<0 || activeCard>=cards.length}
@@ -404,20 +505,21 @@ function SettingsPanel({cards, activeCard, title, editTitle, deleteCards}) {
     {(s) => <Flex style={s} direction="column" gap="md" w={panels[1]} id="settings-panel">
       <Flex justify="space-between" w="100%">
         <Title order={3}>Exercise settings</Title>
-          <Link to="/play/-1">
-            <Button color="green" rightSection={<Icon.Play color="white" size="20"/>}>Play test</Button>
+          <Link to={'/play/'+exercise.id}>
+            <Button color="green" rightSection={<Icon.Play color="white"/>}>Play test</Button>
           </Link>
       </Flex>
       <TextInput
         label="Title"
         placeholder="Insert exercise title here"
-        value={title}
-        onChange={handleTitleChange}
         maxLength="40"
-        error={!title && 'Title can\'t be empty'}
+        error={!exercise.name && 'Title can\'t be empty'}
+        value={exercise.name}
+        onChange={handleTitleChange}
+        onBlur={handleTitleBlur}
       />
       <Input.Wrapper
-        label={'Total turns: '+turns}
+        label={'Total turns: '+exercise.turns}
         error={difficulty.label || 'ciao'}
         errorProps={{c: difficulty.color, fz: 'md', fw: 600}}
       >
@@ -429,8 +531,8 @@ function SettingsPanel({cards, activeCard, title, editTitle, deleteCards}) {
           marks={[18, 21, 24, 27, 30].map(v => ({value: v, label: v}))}
           size="lg"
           color={difficulty.color}
-          value={turns}
-          onChange={(value) => setTurns(value)}
+          value={exercise.turns}
+          onChange={handleTurnsChange}
           onChangeEnd={handleTurnsChangeEnd}
         />
       </Input.Wrapper>
@@ -461,15 +563,17 @@ function SettingsPanel({cards, activeCard, title, editTitle, deleteCards}) {
 }
 
 function Editor({}) {
-  const [title, setTitle] = useState('')
+  const [exercise, setExercise] = useState({})
   const [cards, setCards] = useState([])
   const [activeCard, setActiveCard] = useState(-1)
   const [page, setPage] = useState('loading')
   const ex_id = useParams().id
-
-  const editTitle = async (title) => {
-    setTitle(title)
-    await API.editExercise({id: ex_id, name: title})
+  
+  const loadExercise = async () => {
+    const ex = await API.getExercise(ex_id)
+    setExercise(ex)
+    if(!ex) setPage('invalid')
+    else setPage('loaded')
   }
   
   const loadCards = async () => {
@@ -490,17 +594,22 @@ function Editor({}) {
     loadCards()
   }
 
-  const loadTitle = async() => {
-    const ex = await API.getExercise(ex_id)
-    if(!ex) setPage('invalid')
-    else {
-      setPage('loaded')
-      setTitle(ex.name)
-    }
-  }
+  // const loadTitle = async() => {
+  //   const ex = await API.getExercise(ex_id)
+  //   if(!ex) setPage('invalid')
+  //   else {
+  //     setPage('loaded')
+  //     setTitle(ex.name)
+  //   }
+  // }
+
+  // const editTitle = async (title) => {
+  //   // setTitle(title)
+  //   await API.editExercise({...exercise, name: title})
+  // }
 
   useEffect(() => {
-    loadTitle()
+    loadExercise()
   }, [])
 
   return <>
@@ -513,8 +622,9 @@ function Editor({}) {
     {page=='loaded' && <>
       <Flex direction="row" h="92%" gap="60">
         <CardsListPanel
+          title={exercise.name}
           cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}
-          loadCards={loadCards} createCard={createCard} title={title}
+          loadCards={loadCards} createCard={createCard}
         />
         <CardEditPanel
           cards={cards} setCards={setCards} activeCard={activeCard} setActiveCard={setActiveCard}
@@ -524,8 +634,9 @@ function Editor({}) {
           cards={cards} activeCard={activeCard}
         />
         <SettingsPanel
+          exercise={exercise} setExercise={setExercise}
           cards={cards} activeCard={activeCard}
-          deleteCards={deleteCards} title={title} editTitle={editTitle}
+          deleteCards={deleteCards}
         />
       </Flex>
     </>}

@@ -2,9 +2,13 @@
 
 GET http://localhost:3001/api/ping HTTP/1.1
 
-### All
+### All (Exercises + cards + blocks)
 
 DELETE http://localhost:3001/api/all HTTP/1.1
+
+### Empty DB (Drops tables, also users)
+
+DELETE http://localhost:3001/api/tables HTTP/1.1
 
 
 
@@ -40,7 +44,8 @@ PUT http://localhost:3001/api/exercise/1 HTTP/1.1
 content-type: application/json
 
 {
-    "name": "Edited name"
+    "name": "Edited name",
+    "turns": 24
 }
 
 ###
@@ -75,7 +80,11 @@ content-type: application/json
 {
     "ex_id": 1,
     "name": "Employer starts the task of the day",
-    "cost": 4
+    "cost": 4,
+    "bonus": 0,
+    "draws": 0,
+    "buys": 0,
+    "turns": 0
 }
 
 ###

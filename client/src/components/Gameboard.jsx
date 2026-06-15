@@ -1,6 +1,10 @@
 import { use, useState, useEffect } from 'react'
-import { Link, useParams } from 'react-router'
-import { Flex, Box, Space, Title, Progress, RingProgress, List, ColorSwatch, Modal, Button } from '@mantine/core'
+import { Link, Navigate, useParams } from 'react-router'
+import {
+  Flex, Box, Space, Modal, Button, Title, Text,
+  Loader, Progress, RingProgress, List, ColorSwatch
+} from '@mantine/core'
+import '@mantine/core/styles.css'
 import './Gameboard.css'
 import API from '../API'
 
@@ -45,8 +49,7 @@ function Card({card, x=card.x, y=card.y, z=0, task=()=>{}, flipped=false, clicka
   </div>
 }
 
-function GameView({}) {
-  const [deck, setDeck] = useState([])
+function GameView({deck, setDeck}) {
   const [coins, setCoins] = useState(0)
   const [buys, setBuys] = useState(1)
   const [turns, setTurns] = useState(10)
@@ -121,11 +124,16 @@ function GameView({}) {
 
   return <>
     <div id="game-bg">
-      <div id="hud">
+      {/* <div id="hud">
         <span>Turns: {10-turns+1}/10✋🏻</span>
         <span>Buys: {buys}🛒</span>
         <span>Available coins: {coins}🪙</span>
-      </div>
+      </div> */}
+      <Flex id="hud" gap="20">
+        <Text ml="20">Turns: {10-turns+1}/10✋🏻</Text>
+        <Text>Buys: {buys}🛒</Text>
+        <Text>Available coins: {coins}🪙</Text>
+      </Flex>
       {Object.keys(cards).map((id, k) => <Card
         key={k}
         card={cards[id]}
@@ -166,28 +174,29 @@ function GameView({}) {
       {/* <button onClick={placeDeck}>place</button> */}
       <Flex id="legend" direction="column" w="170" gap="lg">
         <Title order={4} ta="center">Legend</Title>
-        <span>&nbsp;+N 🃏<br/>Draw N cards</span>
-        <span>&nbsp;+N 🛒<br/>Add N buys in a turn</span>
-        <span>&nbsp;+N ✋🏻<br/>Add N turns</span>
+        <Text>&nbsp;+N 🃏<br/>Draw N cards</Text>
+        <Text>&nbsp;+N 🛒<br/>Add N buys in a turn</Text>
+        <Text>&nbsp;+N ✋🏻<br/>Add N turns</Text>
       </Flex>
     </div>
   </>
 }
 
-function ProgressPanel({logged, progress=50}) {
-  const {id} = useParams()
+function ProgressPanel({logged, exercise, deck, progress=50}) {
   return <>
     <Modal opened={false} overlayProps={{backgroundOpacity: 0.5}}>Game finished!</Modal>
     <Modal opened={false} overlayProps={{backgroundOpacity: 0.5}}>Next turn!</Modal>
     <Flex id="panel" h="100%" direction="column" gap="sm">
-      <Title order={3}>Exercise: {id}</Title>
-      {logged && <Link to={'/edit/'+id}><Button w="100%" color="green">Edit exercise</Button></Link>}
+      <Title size="md" order={3}>Exercise</Title>
+      <Title order={3} c="#005">{exercise.name}</Title>
+      {logged && <Link to={'/edit/'+exercise.id}><Button w="100%" color="green">Edit exercise</Button></Link>}
       <Title size="md" order={3} mt="30">Your progress</Title>
       <Progress.Root size="30">
         <Progress.Section value={progress} color="green">
           <Progress.Label>{progress}%</Progress.Label>
         </Progress.Section>
       </Progress.Root>
+      {/* {deck[0]?.title} */}
       <Title size="md" order={3} mt="30">Deck composition</Title>
       <RingProgress
         label={<Title ta="center">🃏</Title>}
@@ -208,16 +217,42 @@ function ProgressPanel({logged, progress=50}) {
 }
 
 function Gameboard({logged}) {
+  const [exercise, setExercise] = useState({})
+  const [cards, setCards] = useState([])
+  const [deck, setDeck] = useState([])
+  const [page, setPage] = useState('loading')
+  const ex_id = useParams().id
   const SEP = 80 // 70
+    
+  const loadExercise = async () => {
+    const ex = await API.getExercise(ex_id)
+    setExercise(ex)
+    if(!ex) setPage('invalid')
+    else setPage('loaded')
+    setCards(await API.getExerciseCards(ex_id))
+  }
+
+  useEffect(() => {
+    loadExercise()
+  }, [])
+
   return <>
-    <Flex h="100%">
-      <Box w={SEP+"%"}>
-        <GameView/>
-      </Box>
-      <Box w={100-SEP+"%"}>
-        <ProgressPanel logged={logged}/>
-      </Box>
-    </Flex>
+    {page=='invalid' && <Navigate to="/"/>}
+    {page=='loading' && <>
+      <Flex w="100%" h="100%" justify="center" align="center">
+        <Loader color="green" size="xl"/>
+      </Flex>
+    </>}
+    {page=='loaded' && <>
+      <Flex h="100%">
+        <Box w={SEP+"%"}>
+          <GameView deck={deck} setDeck={setDeck}/>
+        </Box>
+        <Box w={100-SEP+"%"}>
+          <ProgressPanel logged={logged} exercise={exercise} deck={deck}/>
+        </Box>
+      </Flex>
+    </>}
   </>
 }
 

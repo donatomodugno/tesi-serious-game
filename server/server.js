@@ -117,7 +117,16 @@ app.delete('/api/all', async (req, res) => {
         ]
         await Promise.all(promises)
         console.log('Deletes done.')
-        res.status(200).send('Exercise + cards + blocks eliminati dal db.')
+        res.status(200).send('Exercise + cards + blocks deleted from db.')
+    } catch(err) {
+        res.status(503).json(err)
+    }
+})
+
+app.delete('/api/tables', async (req, res) => {
+    try {
+        dao.clear()
+        res.status(200).send('Database tables doppred.')
     } catch(err) {
         res.status(503).json(err)
     }
@@ -163,7 +172,7 @@ app.put('/api/exercise/:id', async (req, res) => {
     try {
         await dao.editExercise({...req.body, id: req.params.id})
         console.log('Update done.')
-        res.status(200).send('Exercise aggiornato nel db.')
+        res.status(200).send('Exercise updated in db.')
     } catch(err) {
         res.status(503).json(err)
     }
@@ -173,7 +182,7 @@ app.delete('/api/exercise/:id', async (req, res) => {
     try {
         await dao.deleteExercise(req.params.id)
         console.log('Delete done.')
-        res.status(200).send('Exercise eliminato dal db.')
+        res.status(200).send('Exercise deleted from db.')
     } catch(err) {
         res.status(503).json(err)
     }
@@ -188,7 +197,7 @@ app.delete('/api/exercise/all/:id', async (req, res) => {
         await dao.deleteExerciseCards(req.params.id)
         await dao.deleteExercise(req.params.id)
         console.log('Deletes done.')
-        res.status(200).send('Exercise + cards + blocks eliminati dal db.')
+        res.status(200).send('Exercise + cards + blocks deleted from db.')
     } catch(err) {
         res.status(503).json(err)
     }
@@ -244,7 +253,7 @@ app.put('/api/card/:id', async (req, res) => {
     try {
         await dao.editCard({...req.body, id: req.params.id})
         console.log('Update done.')
-        res.status(200).send('Card aggiornata nel db.')
+        res.status(200).send('Card updated in db.')
     } catch(err) {
         res.status(503).json(err)
     }
@@ -254,7 +263,7 @@ app.delete('/api/card/:id', async (req, res) => {
     try {
         await dao.deleteCard(req.params.id)
         console.log('Delete done.')
-        res.status(200).send('Card eliminata dal db.')
+        res.status(200).send('Card deleted from db.')
     } catch(err) {
         res.status(503).json(err)
     }
@@ -265,7 +274,7 @@ app.delete('/api/card/all/:id', async (req, res) => {
         await dao.deleteCardBlocks(req.params.id)
         await dao.deleteCard(req.params.id)
         console.log('Deletes done.')
-        res.status(200).send('Card + blocks eliminati dal db.')
+        res.status(200).send('Card + blocks deleted from db.')
     } catch(err) {
         res.status(503).json(err)
     }
@@ -275,7 +284,7 @@ app.delete('/api/cards/:ex_id', async (req, res) => {
     try {
         await dao.deleteExerciseCards(req.params.ex_id)
         console.log('Deletes done.')
-        res.status(200).send('Cards eliminate dal db.')
+        res.status(200).send('Cards deleted from db.')
     } catch(err) {
         res.status(503).json(err)
     }
@@ -289,7 +298,7 @@ app.delete('/api/cards/all/:ex_id', async (req, res) => {
         )
         await dao.deleteExerciseCards(req.params.ex_id)
         console.log('Deletes done.')
-        res.status(200).send('Cards + blocks eliminati dal db.')
+        res.status(200).send('Cards + blocks deleted from db.')
     } catch(err) {
         res.status(503).json(err)
     }
@@ -345,7 +354,7 @@ app.put('/api/block/:id', async (req, res) => {
     try {
         await dao.editBlock({...req.body, id: req.params.id})
         console.log('Update done.')
-        res.status(200).send('Block aggiornato nel db.')
+        res.status(200).send('Block updated in db.')
     } catch(err) {
         res.status(503).json(err)
     }
@@ -355,7 +364,7 @@ app.delete('/api/block/:id', async (req, res) => {
     try {
         await dao.deleteBlock(req.params.id)
         console.log('Delete done.')
-        res.status(200).send('Block eliminato dal db.')
+        res.status(200).send('Block deleted from db.')
     } catch(err) {
         res.status(503).json(err)
     }
@@ -365,7 +374,7 @@ app.delete('/api/blocks/:c_id', async (req, res) => {
     try {
         await dao.deleteCardBlocks(req.params.c_id)
         console.log('Deletes done.')
-        res.status(200).send('Blocks eliminati dal db.')
+        res.status(200).send('Blocks deleted from db.')
     } catch(err) {
         res.status(503).json(err)
     }

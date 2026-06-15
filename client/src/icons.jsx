@@ -1,4 +1,4 @@
-function IconLogo({size=500, stroke='white', background='transparent'}) {
+function IconLogo({size=500, stroke='white', sw=12, background='transparent'}) {
     return <>
         <svg width={size} height={size} viewBox="0 0 450 450" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
             <defs>
@@ -8,9 +8,9 @@ function IconLogo({size=500, stroke='white', background='transparent'}) {
                 </radialGradient>
             </defs>
             <rect x="0" y="0" width="450" height="450" fill={background/*url(#RadialGradient1)*/}/>
-            <rect x="300" y="100" width="150" height="230" fill="#0BF" stroke={stroke} strokeWidth="12" opacity="1" rx="20" ry="20" transform="translate(-30 10) rotate(15, 300, 100)"/>
-            <rect x="150" y="100" width="150" height="230" fill="#FC0" stroke={stroke} strokeWidth="12" opacity="1" rx="20" ry="20" transform=""/>
-            <rect x="000" y="100" width="150" height="230" fill="#F07" stroke={stroke} strokeWidth="12" opacity="1" rx="20" ry="20" transform="translate(20 -20) rotate(-15, 150, 100)"/>
+            <rect x="300" y="100" width="150" height="230" fill="#0BF" stroke={stroke} strokeWidth={sw} opacity="1" rx="20" ry="20" transform="translate(-30 10) rotate(15, 300, 100)"/>
+            <rect x="150" y="100" width="150" height="230" fill="#FC0" stroke={stroke} strokeWidth={sw} opacity="1" rx="20" ry="20" transform=""/>
+            <rect x="000" y="100" width="150" height="230" fill="#F07" stroke={stroke} strokeWidth={sw} opacity="1" rx="20" ry="20" transform="translate(20 -20) rotate(-15, 150, 100)"/>
         </svg>
     </>
 }
@@ -48,7 +48,7 @@ function IconLogout({color='black'}) {
     </>
 }
 
-function IconPlay({color='black', size=30}) {
+function IconPlay({color='black', size=20}) {
     return <>
         <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} fill={color} className="bi bi-play-fill" viewBox="0 0 16 16">
             <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/>
