@@ -1,16 +1,16 @@
-function IconLogo({size=500, stroke='white', sw=12, background='transparent'}) {
+function IconLogo({size=500, fill, stroke='white', sw=12, bg='transparent', colored=true}) {
     return <>
         <svg width={size} height={size} viewBox="0 0 450 450" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
             <defs>
-                <radialGradient id="RadialGradient1">
-                <stop offset="0%" stopColor="black"/>
+                <radialGradient id="grad1">
+                <stop offset="0%" stopColor="grey"/>
                 <stop offset="100%" stopColor="transparent"/>
                 </radialGradient>
             </defs>
-            <rect x="0" y="0" width="450" height="450" fill={background/*url(#RadialGradient1)*/}/>
-            <rect x="300" y="100" width="150" height="230" fill="#0BF" stroke={stroke} strokeWidth={sw} opacity="1" rx="20" ry="20" transform="translate(-30 10) rotate(15, 300, 100)"/>
-            <rect x="150" y="100" width="150" height="230" fill="#FC0" stroke={stroke} strokeWidth={sw} opacity="1" rx="20" ry="20" transform=""/>
-            <rect x="000" y="100" width="150" height="230" fill="#F07" stroke={stroke} strokeWidth={sw} opacity="1" rx="20" ry="20" transform="translate(20 -20) rotate(-15, 150, 100)"/>
+            <rect x="0" y="0" width="450" height="450" fill={bg/*url(#grad1)*/}/>
+            <rect x="300" y="100" width="150" height="230" fill={fill || '#0BF'} stroke={stroke} strokeWidth={sw} opacity="1" rx="20" ry="20" transform="translate(-30 10) rotate(15, 300, 100)"/>
+            <rect x="150" y="100" width="150" height="230" fill={fill || '#FC0'} stroke={stroke} strokeWidth={sw} opacity="1" rx="20" ry="20" transform=""/>
+            <rect x="000" y="100" width="150" height="230" fill={fill || '#F07'} stroke={stroke} strokeWidth={sw} opacity="1" rx="20" ry="20" transform="translate(20 -20) rotate(-15, 150, 100)"/>
         </svg>
     </>
 }

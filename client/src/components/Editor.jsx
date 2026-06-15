@@ -451,8 +451,8 @@ function CardPreviewPanel({cards, activeCard}) {
           {cards[activeCard].draws>0 && <Text ta="center" fz="xl">+{cards[activeCard].draws}🃏</Text>}
           {cards[activeCard].buys>0 && <Text ta="center" fz="xl">+{cards[activeCard].buys}🛒</Text>}
           {cards[activeCard].turns>0 && <Text ta="center" fz="xl">+{cards[activeCard].turns}✋🏻</Text>}
-          {cards[activeCard].bonus>=0 && <Text ta="center" fz="xl" c="green">[+{cards[activeCard].bonus}]</Text>}
-          {cards[activeCard].bonus<0 && <Text ta="center" fz="xl" c="red">[{cards[activeCard].bonus}]</Text>}
+          {cards[activeCard].bonus>=0 && <Text ta="center" fz="xl" c="green">[+{cards[activeCard].bonus}🪙]</Text>}
+          {cards[activeCard].bonus<0 && <Text ta="center" fz="xl" c="red">[{cards[activeCard].bonus}🪙]</Text>}
         </>}
         <Text ta="center" fz="xl" p="20">{cards[activeCard].cost+'🪙'}</Text>
       </Flex>}
@@ -586,7 +586,10 @@ function Editor({}) {
   }
 
   const saveCard = async () => {
-    await API.editCard(cards[activeCard])
+    // if(cards[activeCard].type=='coins')
+    //   await API.deleteCard(cards[activeCard].id)
+    // else
+      await API.editCard(cards[activeCard])
   }
 
   const deleteCards = async () => {
