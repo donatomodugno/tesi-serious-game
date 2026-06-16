@@ -72,6 +72,11 @@
     font-size: 90%;
 }
 
+/* Non funziona */
+/* .card:hover {
+    z-index: 100;
+} */
+
 .card-front .title {
     font-size: 130%;
 }
