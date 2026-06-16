@@ -17,10 +17,11 @@ const stock_cards = {
 const GRID = {
   SEP: 80,
   DIST: 100,
-  ROW1: {Y: 120, X1: 200, X2: 500},
-  ROW2: {Y: 280, X: 200},
-  ROW3SEL: {Y: 470, X: 200},
-  ROW3: {Y: 520, XDCK: 50, X: 200},
+  XDCK: 50, X1: 200, X2: 500, XWST: 750,
+  Y1:   120,
+  Y2:   280,
+  YSEL: 470,
+  Y3:   520,
 }
 function shuffle(arr) {
   for(let icurr = arr.length-1; icurr>=0; icurr--) {
@@ -38,7 +39,7 @@ function Card({card, x, y, task=()=>{}, flipped=false, clickable, valid, showCos
         position: 'absolute',
         top: y,
         left: x,
-        transition: '0.3s',
+        transition: '0.5s',
       }}
       onClick={clickable && valid ? task : () => {}}
     >
@@ -77,9 +78,11 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
   const [totalTurns, setTotalTurns] = useState(exercise.turns)
   const [turn, setTurn] = useState(1)
   const [hand, setHand] = useState(settingsPerTurn.hand)
+  const [waste, setWaste] = useState(0)
   const [modal, setModal] = useState(null)
   
   useEffect(() => {
+    setWaste(0)
     // Shuffle deck
     setDeck(shuffle(deck).map(c => ({...c, selected: false})))
   }, [turn])
@@ -100,6 +103,8 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
       )
       setBuys(settingsPerTurn.buys)
     }
+    // Reset selections
+    setDeck(deck.map(c => ({...c, selected: false})))
     // Recount available coins
     setAvCoins(
       deck
@@ -158,12 +163,15 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         // Carte coins da comprare
         key={k}
         card={stock_cards[id]}
-        x={GRID.ROW1.X2+k*GRID.DIST}
-        y={GRID.ROW1.Y}
+        x={GRID.X2+k*GRID.DIST}
+        y={GRID.Y1}
         clickable
         valid={selCoins>=stock_cards[id].cost}
         task={() => {
-          setDeck([...deck, stock_cards[id]])
+          setDeck((deck) => [...deck, {...stock_cards[id], x: GRID.X2+k*GRID.DIST, y: GRID.Y1, flipped: false}])
+          setTimeout(() => {
+            setDeck((deck) => deck.toSpliced(-1, 1, {...stock_cards[id], x: undefined, y: undefined, flipped: undefined}))
+          }, 1) // Delay of 1 millis just to render the animation
           setBuys(buys-1)
         }}
       />)}
@@ -171,12 +179,15 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         // Carte bpmn da comprare
         key={k}
         card={c}
-        x={GRID.ROW1.X1+k*GRID.DIST}
-        y={GRID.ROW1.Y}
+        x={GRID.X1+k*GRID.DIST}
+        y={GRID.Y1}
         clickable
         valid={selCoins>=c.cost}
         task={() => {
-          setDeck([...deck, c])
+          setDeck((deck) => [...deck, {...c, x: GRID.X1+k*GRID.DIST, y: GRID.Y1, flipped: false}])
+          setTimeout(() => {
+            setDeck((deck) => deck.toSpliced(-1, 1, {...c, x: undefined, y: undefined, flipped: undefined}))
+          }, 1) // Delay of 1 millis just to render the animation
           setCards({...cards, bpmn: cards.bpmn.toSpliced(k, 1)})
           setBuys(buys-1)
         }}
@@ -185,12 +196,23 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         // Carte action da comprare
         key={k}
         card={c}
-        x={GRID.ROW2.X+k*GRID.DIST}
-        y={GRID.ROW2.Y}
+        x={GRID.X1+k*GRID.DIST}
+        y={GRID.Y2}
         clickable
         valid={selCoins>=c.cost}
         task={() => {
-          setDeck([...deck, c])
+          if(c.type=='bpmn' || c.type=='action') {
+            setWaste(deck.filter(c => c.selected).length)
+            setDeck([
+              ...deck
+                .reduce((acc, c) => {
+                  if(c.selected) return [...acc, c]
+                  else return [c, ...acc]
+                }, [])
+                .map(c => ({...c, selected: false})),
+              c
+            ])
+          }
           setCards({...cards, action: cards.action.toSpliced(k, 1)})
           setBuys(buys-1)
         }}
@@ -199,18 +221,18 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         // Mazzo capovolto
         key={k}
         card={c}
-        x={GRID.ROW3.XDCK}
-        y={GRID.ROW3.Y}
+        x={c.x ?? GRID.XDCK}
+        y={c.y ?? GRID.Y3}
         clickable
         valid={false}
-        flipped
+        flipped={c.flipped ?? true}
       />)}
       {deck.slice(0, hand).map((c, k) => <Card
         // Mano di marte del caz... mano di carte del mazzo
         key={k}
         card={c}
-        x={GRID.ROW3.X+k*500/hand}
-        y={c.selected ? GRID.ROW3SEL.Y : GRID.ROW3.Y}
+        x={GRID.X1+k*500/hand}
+        y={c.selected ? GRID.YSEL : GRID.Y3}
         clickable={c.type!='bpmn'}
         valid
         task={() => {
@@ -219,6 +241,15 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
           }
         }}
         showCost={false}
+      />)}
+      {deck.slice(-waste, 0).map((c, k) => <Card
+        // Carte scartate (usate)
+        key={k}
+        card={c}
+        x={c.x ?? GRID.XWST}
+        y={c.y ?? GRID.Y3}
+        clickable={false}
+        flipped={c.flipped ?? true}
       />)}
     </div>
   </>
@@ -252,7 +283,7 @@ function ProgressPanel({logged, exercise, cards, deck, progress=0}) {
       <Title size="md" order={3} mt="30">Your progress</Title>
       <Progress.Root size="30">
         <Progress.Section value={progress} color="green">
-          <Progress.Label>{progress}%</Progress.Label>
+          <Progress.Label>{Math.round(progress)}%</Progress.Label>
         </Progress.Section>
       </Progress.Root>
       <Title size="md" order={3} mt="30">Deck composition</Title>
