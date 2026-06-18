@@ -12,7 +12,7 @@ import { Icon, bpmn_icon } from '../icons'
 import API from '../API'
 
 const panels = ['20%', '40%', '20%']
-const new_card = {name: 'Card', type: 'bpmn', cost: 1, bonus: 0, draws: 0, buys: 0, turns: 0}
+const new_card = {name: 'Card', type: 'bpmn', cost: 1, score: 0, bonus: 0, draws: 0, buys: 0, turns: 0}
 const new_block = {type: 'task', text: 'New block'}
 const block_types_groups = [
   {group: 'Tasks', children: [
@@ -269,6 +269,14 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
   }
   // Change and ChangeEnd events written separate just to prevent too many requests
 
+  const handleScoreChange = (value) => {
+    setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], score: value}))
+  }
+
+  const handleScoreChangeEnd = async (value) => {
+    await saveCard()
+  }
+
   const handleBonusChange = (value) => {
     setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], bonus: value}))
   }
@@ -327,17 +335,33 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
           {cards[activeCard].type=='bpmn' && <>
             <Input.Wrapper label="Cost">
               <Slider
-                domain={[0.9, 4.1]}
+                // domain={[0.9, 8.1]}
                 min={1}
-                max={4}
+                max={12}
                 step={1}
-                marks={[1, 2, 3, 4].map(v => ({value: v, label: v}))}
+                marks={[...Array(13).keys()].slice(1).map(v => ({value: v, label: v}))}
                 size="lg"
                 color="green"
                 label={null}
                 value={cards[activeCard].cost}
                 onChange={handleCostChange}
                 onChangeEnd={handleCostChangeEnd}
+              />
+            </Input.Wrapper>
+            <Input.Wrapper label="Score (secret)">
+              <Slider
+                // domain={[0.9, 8.1]}
+                min={-3}
+                max={6}
+                step={1}
+                startPointValue={0}
+                marks={[...Array(10).keys()].map(v => v-3).map(v => ({value: v, label: v}))}
+                size="lg"
+                color={cards[activeCard].score<0 ? 'red' : 'green'}
+                label={null}
+                value={cards[activeCard].score}
+                onChange={handleScoreChange}
+                onChangeEnd={handleScoreChangeEnd}
               />
             </Input.Wrapper>
             <Space/>
@@ -355,11 +379,10 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
           {cards[activeCard].type=='action' && <>
             <Input.Wrapper label="Cost">
               <Slider
-                domain={[0.9, 4.1]}
                 min={1}
-                max={4}
+                max={12}
                 step={1}
-                marks={[1, 2, 3, 4].map(v => ({value: v, label: v}))}
+                marks={[...Array(13).keys()].slice(1).map(v => ({value: v, label: v}))}
                 size="lg"
                 color="green"
                 label={null}
@@ -389,12 +412,12 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
             </Input.Wrapper>
             <Flex gap="xl" mt="20">
               <NumberInput
-                label="Add draws (0-2)"
+                label="Add draws (0-3)"
                 size="xl"
                 labelProps={{fz: 'sm'}}
                 leftSection={<Text fz="30">🃏</Text>}
                 min={0}
-                max={2}
+                max={3}
                 value={cards[activeCard].draws}
                 onChange={(value) => setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], draws: value}))}
                 onBlur={async () => { await saveCard() }}
@@ -446,7 +469,7 @@ function CardPreviewPanel({cards, activeCard}) {
         direction="column" justify="center" align="center"
         id="card-preview" className={'type-'+cards[activeCard].type}
       >
-        {cards[activeCard].type!='coins' && <Text ta="center" fz="xl" p="20">{cards[activeCard].name}</Text>}
+        {cards[activeCard].type!='coins' && <Title ta="center" fz="xl" p="20">{cards[activeCard].name}</Title>}
         {cards[activeCard].type=='action' && <>
           {cards[activeCard].draws>0 && <Text ta="center" fz="xl">+{cards[activeCard].draws}🃏</Text>}
           {cards[activeCard].buys>0 && <Text ta="center" fz="xl">+{cards[activeCard].buys}🛒</Text>}
@@ -456,14 +479,12 @@ function CardPreviewPanel({cards, activeCard}) {
         </>}
         <Text ta="center" fz="xl" p="20">{cards[activeCard].cost+'🪙'}</Text>
       </Flex>}
-      {/* <Button onClick={() => console.log(cards)}>log cards</Button> */}
     </Flex>}
   </Transition>
 }
 
 function SettingsPanel({exercise, setExercise, cards, activeCard, deleteCards}) {
   const [openedModalDelete, setOpenedModalDelete] = useState(false)
-  // const [turns, setTurns] = useState(24)
   const [difficulty, setDifficulty] = useState({})
 
   useEffect(() => {
@@ -586,30 +607,13 @@ function Editor({}) {
   }
 
   const saveCard = async () => {
-    // if(cards[activeCard].type=='coins')
-    //   await API.deleteCard(cards[activeCard].id)
-    // else
-      await API.editCard(cards[activeCard])
+    await API.editCard(cards[activeCard])
   }
 
   const deleteCards = async () => {
     await API.deleteExerciseCards(ex_id)
     loadCards()
   }
-
-  // const loadTitle = async() => {
-  //   const ex = await API.getExercise(ex_id)
-  //   if(!ex) setPage('invalid')
-  //   else {
-  //     setPage('loaded')
-  //     setTitle(ex.name)
-  //   }
-  // }
-
-  // const editTitle = async (title) => {
-  //   // setTitle(title)
-  //   await API.editExercise({...exercise, name: title})
-  // }
 
   useEffect(() => {
     loadExercise()

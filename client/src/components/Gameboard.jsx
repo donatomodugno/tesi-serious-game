@@ -1,13 +1,14 @@
 import { use, useState, useEffect } from 'react'
 import { Link, Navigate, useParams } from 'react-router'
 import {
-  Flex, Box, Space, Modal, Button, Title, Text,
+  Flex, Box, Space, Modal, Button, Title, Text, Splitter,
   Loader, Progress, RingProgress, List, ColorSwatch
 } from '@mantine/core'
 import '@mantine/core/styles.css'
 import './Gameboard.css'
 import { Icon } from '../icons'
 import API from '../API'
+import { BpmnModelerComponent, BpmnViewer } from './'
 
 const stock_cards = {
   'C1': {type: 'coins', name: '1 🪙', cost: 0, bonus: 1, draws: 0, buys: 0, turns: 0},
@@ -17,11 +18,11 @@ const stock_cards = {
 const GRID = {
   SEP: 80,
   DIST: 100,
-  XDCK: 50, X1: 200, X2: 500, XWST: 750,
-  Y1:   120,
-  Y2:   280,
-  YSEL: 470,
-  Y3:   520,
+  XDCK: 50, X1: 200, X2: 500, /* XWST: 850, */ XWST: 50,
+  Y1:   50,
+  Y2:   230,
+  YSEL: 420,
+  Y3:   470,
 }
 function shuffle(arr) {
   for(let icurr = arr.length-1; icurr>=0; icurr--) {
@@ -41,7 +42,7 @@ function Card({card, x, y, task=()=>{}, flipped=false, clickable, valid, showCos
         left: x,
         transition: '0.5s',
       }}
-      onClick={clickable && valid ? task : () => {}}
+      onClick={clickable && (valid || card.type=='bpmn') ? task : () => {}}
     >
       <div className={'card' + (flipped ? ' flipped' : '') + (clickable ? valid ? ' valid' : ' invalid' : '')}>
         <Flex className="card-back"></Flex>
@@ -49,8 +50,9 @@ function Card({card, x, y, task=()=>{}, flipped=false, clickable, valid, showCos
           className={'card-front type-'+card.type}
           direction="column" justify="space-between" align="center"
         >
-          {card.type!='coins' && <Text fw="700" ta="center">{card.name}</Text>}
           {card.type=='coins' && <Title order={3} ta="center" py="20">{card.bonus}🪙</Title>}
+          {card.type=='bpmn' && <Title order={3} ta="center" py="10">{card.name}</Title>}
+          {card.type=='action' && <Text fw="700" ta="center">{card.name}</Text>}
           {card.type=='action' && <div>
             {card.draws>0 && <Text>+{card.draws}🃏</Text>}
             {card.buys>0 && <Text mt="-8">+{card.buys}🛒</Text>}
@@ -58,6 +60,7 @@ function Card({card, x, y, task=()=>{}, flipped=false, clickable, valid, showCos
             {card.bonus>=0 && <Text fz="sm" c="green">[+{card.bonus}🪙]</Text>}
             {card.bonus<0 && <Text fz="sm" c="red">[{card.bonus}🪙]</Text>}
           </div>}
+          {card.type=='bpmn' && <Text ta="center" fz="90%">BPMN elem.</Text>}
           <Text ta="center" fz="sm" p="0">{showCost && <>Cost: {card.cost}🪙</>}</Text>
         </Flex>
       </div>
@@ -70,7 +73,7 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
     bpmn: 2,
     action: 2,
     hand: 5,
-    buys: 3,
+    buys: 1,
   }
   const [avCoins, setAvCoins] = useState(0)
   const [selCoins, setSelCoins] = useState(0)
@@ -82,12 +85,15 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
   const [modal, setModal] = useState(null)
   
   useEffect(() => {
+    setHand(settingsPerTurn.hand)
     setWaste(0)
     // Shuffle deck
     setDeck(shuffle(deck).map(c => ({...c, selected: false})))
   }, [turn])
 
   useEffect(() => {
+    // Test
+    console.log(deck.slice(deck.length-waste, deck.length))
     // Win scenario
     if(progress>=100) setModal(
       {text: 'Game finished!', confirmText: 'See results', confirm: finishGame}
@@ -106,15 +112,23 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
     // Reset selections
     setDeck(deck.map(c => ({...c, selected: false})))
     // Recount available coins
+    setAvCoins(() =>
+      deck
+      .slice(0, hand)
+      .map(c => c.bonus)
+      .reduce((sum, n) => sum+n, 0)
+    )
+    setAvCoins((coins) => coins>0 ? coins : 0)
+  }, [buys])
+
+  useEffect(() => {
     setAvCoins(
       deck
       .slice(0, hand)
       .map(c => c.bonus)
       .reduce((sum, n) => sum+n, 0)
     )
-  }, [buys])
-
-  useEffect(() => {
+    setAvCoins((coins) => coins>0 ? coins : 0)
     setSelCoins(
       deck
       .slice(0, hand)
@@ -122,6 +136,7 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
       .map(c => c.bonus)
       .reduce((sum, n) => sum+n, 0)
     )
+    setSelCoins((coins) => coins>0 ? coins : 0)
   }, [deck])
 
   return cards.bpmn && cards.action && <>
@@ -133,15 +148,17 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         modal?.confirm()
         setModal(null)
       }}
+      cancel={modal?.cancel || null}
+      disabled={modal?.disabled || false}
       // confirm={modal?.confirm||(() => setModal(null))}
     />
     <div id="game-bg">
       <Flex justify="center" align="center" style={{
         position: 'absolute',
-        bottom: 0,
+        top: 0,
         left: 0,
-        width: '80%',
-        height: '92%',
+        width: '100%',
+        height: '100%',
         pointerEvents: 'none',
       }}>
         <Icon.Logo size="200" fill="#0D0" stroke="#0F05" sw="5"/>
@@ -158,7 +175,12 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         <Text>&nbsp;+N 🛒<br/>Add N buys in a turn</Text>
         <Text>&nbsp;+N ✋🏻<br/>Add N turns</Text>
       </Flex>
-      <button onClick={() => setTurn(totalTurns-2)}>cheat!</button>
+      {/* <button onClick={() => setTurn(totalTurns-2)}>cheat!</button> */}
+      <Button
+        color="green" variant="default" w="170" m="10"
+        onClick={() => setBuys(0)}
+      >End turn</Button>
+      {/* <button onClick={() => console.log(deck.slice(deck.length-waste, deck.length))}>waste</button> */}
       {Object.keys(stock_cards).map((id, k) => <Card
         // Carte coins da comprare
         key={k}
@@ -184,12 +206,23 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         clickable
         valid={selCoins>=c.cost}
         task={() => {
-          setDeck((deck) => [...deck, {...c, x: GRID.X1+k*GRID.DIST, y: GRID.Y1, flipped: false}])
-          setTimeout(() => {
-            setDeck((deck) => deck.toSpliced(-1, 1, {...c, x: undefined, y: undefined, flipped: undefined}))
-          }, 1) // Delay of 1 millis just to render the animation
-          setCards({...cards, bpmn: cards.bpmn.toSpliced(k, 1)})
-          setBuys(buys-1)
+          setModal({
+            text: <>
+              <Title order={3}>BPMN preview</Title>
+              <BpmnViewer/>
+            </>,
+            confirmText: 'Buy card',
+            confirm: () => {
+              setDeck((deck) => [...deck, {...c, x: GRID.X1+k*GRID.DIST, y: GRID.Y1, flipped: false}])
+              setTimeout(() => {
+                setDeck((deck) => deck.toSpliced(-1, 1, {...c, x: undefined, y: undefined, flipped: undefined}))
+              }, 1) // Delay of 1 millis just to render the animation
+              setCards({...cards, bpmn: cards.bpmn.toSpliced(k, 1)})
+              setBuys(buys-1)
+            },
+            cancel: () => setModal(null),
+            disabled: selCoins<c.cost
+          })
         }}
       />)}
       {cards.action.slice(0, settingsPerTurn.action).map((c, k) => <Card
@@ -201,18 +234,22 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         clickable
         valid={selCoins>=c.cost}
         task={() => {
-          if(c.type=='bpmn' || c.type=='action') {
-            setWaste(deck.filter(c => c.selected).length)
-            setDeck([
-              ...deck
-                .reduce((acc, c) => {
-                  if(c.selected) return [...acc, c]
-                  else return [c, ...acc]
-                }, [])
-                .map(c => ({...c, selected: false})),
-              c
-            ])
-          }
+          setDeck((deck) => [...deck, {...c, x: GRID.X1+k*GRID.DIST, y: GRID.Y2, flipped: false}])
+          setTimeout(() => {
+            setDeck((deck) => deck.toSpliced(-1, 1, {...c, x: undefined, y: undefined, flipped: undefined}))
+          }, 1) // Delay of 1 millis just to render the animation
+          // if(c.type=='bpmn' || c.type=='action') {
+          //   setWaste(deck.filter(c => c.selected).length)
+          //   setDeck([
+          //     ...deck
+          //       .reduce((acc, c) => {
+          //         if(c.selected) return [...acc, c]
+          //         else return [c, ...acc]
+          //       }, [])
+          //       .map(c => ({...c, selected: false})),
+          //     c
+          //   ])
+          // }
           setCards({...cards, action: cards.action.toSpliced(k, 1)})
           setBuys(buys-1)
         }}
@@ -231,18 +268,30 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         // Mano di marte del caz... mano di carte del mazzo
         key={k}
         card={c}
-        x={GRID.X1+k*500/hand}
+        x={GRID.X1+(hand>6 ? k*600/hand : k*GRID.DIST)}
         y={c.selected ? GRID.YSEL : GRID.Y3}
         clickable={c.type!='bpmn'}
-        valid
+        valid={c.type=='coins' || c.type=='action' && (c.draws || c.buys || c.turns)}
         task={() => {
           if(c.type=='coins') {
+            // Just select it
             setDeck(deck.toSpliced(k, 1, {...c, selected: !c?.selected}))
+          }
+          if(c.type=='action') {
+            // Run its effect immediately
+            setWaste(waste+1)
+            setHand(hand-1+c?.draws)
+            if(c.buys) setBuys(buys+c.buys)
+            if(c.turns) setTotalTurns(totalTurns+c.turns)
+            setDeck((deck) => [...deck.toSpliced(k, 1), {...c, x: GRID.X1+k*GRID.DIST, y: GRID.Y3, flipped: false}])
+            setTimeout(() => {
+              setDeck((deck) => deck.toSpliced(-1, 1, {...c, x: undefined, y: undefined, flipped: undefined}))
+            }, 100) // Delay of 1 millis just to render the animation
           }
         }}
         showCost={false}
       />)}
-      {deck.slice(-waste, 0).map((c, k) => <Card
+      {deck.slice(deck.length-waste, deck.length).map((c, k) => <Card
         // Carte scartate (usate)
         key={k}
         card={c}
@@ -255,19 +304,21 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
   </>
 }
 
-function ModalGameAlert({opened, text, confirmText, confirm}) {
+function ModalGameAlert({opened, text, confirmText, confirm, cancel, disabled}) {
+  console.log(cancel)
   return <Modal
     opened={opened}
-    onClose={() => {}}
+    onClose={cancel || (() => {})}
     overlayProps={{backgroundOpacity: 0.5}}
     transitionProps={{transition: 'slide-up'}}
     centered
     withCloseButton={false}
     size="auto"
   >
-    <Flex direction="column" gap="lg">
-      <Text ta="center">{text}</Text>
-      <Button color="green" onClick={confirm}>{confirmText}</Button>
+    <Flex justify="center" direction="column" ta="center">{text}</Flex>
+    <Flex justify="center" gap="md" mt="20">
+      {cancel && <Button color="grey" onClick={cancel}>Back</Button>}
+      <Button color="green" onClick={confirm} disabled={disabled}>{confirmText}</Button>
     </Flex>
   </Modal>
 }
@@ -347,31 +398,68 @@ function Gameboard({logged}) {
 
   return <>
     {page=='invalid' && <Navigate to="/"/>}
-    {page=='finished' && <Navigate to={'/play/'+ex_id+'/results'}/>}
+    {/* {page=='finished' && <Navigate to={'/play/'+ex_id+'/results'}/>} */}
+    {page=='finished' && <Results
+      logged={logged} reload={() => {
+        setPage('loading')
+        loadExercise()
+      }}
+      progress={progress} cards={cards} deck={deck}
+    />}
     {page=='loading' && <>
       <Flex w="100%" h="100%" justify="center" align="center">
         <Loader color="green" size="xl"/>
       </Flex>
     </>}
     {page=='loaded' && <>
-      <Flex h="100%">
-        <Box w={GRID.SEP+'%'}>
-          <GameView
-            exercise={exercise} finishGame={() => setPage('finished')}
-            cards={cards} setCards={setCards}
-            deck={deck} setDeck={setDeck}
-            progress={progress}
-          />
-        </Box>
-        <Box w={100-GRID.SEP+'%'}>
-          <ProgressPanel
-            logged={logged} progress={progress}
-            exercise={exercise} cards={cards} deck={deck}
-          />
-        </Box>
-      </Flex>
+      <Splitter h="92%">
+        <Splitter.Pane defaultSize={70} min={70}>
+          <Flex h="100%">
+            <Box w={GRID.SEP+'%'}>
+              <GameView
+                exercise={exercise} finishGame={() => setPage('finished')}
+                cards={cards} setCards={setCards}
+                deck={deck} setDeck={setDeck}
+                progress={progress}
+              />
+            </Box>
+            <Box w={100-GRID.SEP+'%'}>
+              <ProgressPanel
+                logged={logged} progress={progress}
+                exercise={exercise} cards={cards} deck={deck}
+              />
+            </Box>
+          </Flex>
+        </Splitter.Pane>
+        <Splitter.Pane defaultSize={30} min={5}>
+          <BpmnModelerComponent/>
+        </Splitter.Pane>
+      </Splitter>
     </>}
   </>
+}
+
+function Results({logged, reload, progress, cards, deck}) {
+  const {id} = useParams()
+  return <Flex w="100%" h="70%" justify="space-evenly" align="center" direction="column">
+    <Title>Results</Title>
+    <Title order={3}>
+      You collected {deck.filter(c => c.type=='bpmn').length} BPMN elements
+      out of {deck.filter(c => c.type=='bpmn').length+cards.bpmn.length}
+      {' '}({Math.round(progress)}%)
+    </Title>
+    <Flex gap="md">
+      <Link to="/home">
+        <Button color="green" size="lg">Choose another exercise</Button>
+      </Link>
+      <Link to={'/play/'+id}>
+        <Button color="green" size="lg" onClick={reload}>Try again</Button>
+      </Link>
+      {logged && <Link to={'/edit/'+id}>
+        <Button color="green" size="lg">Edit exercise</Button>
+      </Link>}
+    </Flex>
+  </Flex>
 }
 
 export default Gameboard

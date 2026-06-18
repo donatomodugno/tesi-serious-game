@@ -11,8 +11,9 @@
 }
 
 #game-bg {
-    background-image: var(--grad-bg);
+    background: var(--grad-bg);
     height: 100%; /* 100vh; */
+    position: relative;
 }
 
 .card-hitbox {
