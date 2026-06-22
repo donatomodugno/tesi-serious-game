@@ -20,13 +20,13 @@ const db = new sqlite.Database('db.sqlite', (err) => {
                     hash TEXT NOT NULL
                 )
             `, catchError)
-            // Hashed password: "ciao"
             db.run(`
                 INSERT OR IGNORE INTO users VALUES(?,?,?,?)
             `, [
                 1,
                 'tiziocaio',
                 'sopralapanca@email.com',
+                // Hashed password: "ciao"
                 '$2a$12$3EF8YyXlrap6FaNyx910huccO30532LczCNPBfBBAhy5CtLkaLXHy'
             ], catchError)
             db.run(`
@@ -68,14 +68,12 @@ const exports = {}
 // GLOBAL (DAO)
 
 exports.clear = () => {
-    // return new Promise((resolve, reject) => {
-        db.serialize(() => {
-            db.run(`DROP TABLE IF EXISTS users`, (err) => {if(err) console.error(err.message)})
-            db.run(`DROP TABLE IF EXISTS exercises`, (err) => {if(err) console.error(err.message)})
-            db.run(`DROP TABLE IF EXISTS cards`, (err) => {if(err) console.error(err.message)})
-            db.run(`DROP TABLE IF EXISTS blocks`, (err) => {if(err) console.error(err.message)})
-        })
-    // })
+    db.serialize(() => {
+        db.run(`DROP TABLE IF EXISTS users`, (err) => { if(err) console.error(err.message) })
+        db.run(`DROP TABLE IF EXISTS exercises`, (err) => { if(err) console.error(err.message) })
+        db.run(`DROP TABLE IF EXISTS cards`, (err) => { if(err) console.error(err.message) })
+        db.run(`DROP TABLE IF EXISTS blocks`, (err) => { if(err) console.error(err.message) })
+    })
 }
 
 
@@ -228,7 +226,7 @@ exports.getCard = (id) => {
 
 exports.addCard = (card) => {
     return new Promise((resolve, reject) => {
-        const sql = "INSERT INTO cards(ex_id,name,type,cost,score,bonus,draws,buys,turns) VALUES(?,?,?,?,?,?,?,?)"
+        const sql = "INSERT INTO cards(ex_id,name,type,cost,score,bonus,draws,buys,turns) VALUES(?,?,?,?,?,?,?,?,?)"
         db.run(sql, [card.ex_id, card.name, card.type, card.cost, card.score, card.bonus, card.draws, card.buys, card.turns], function (err) {
             if(err) {
                 reject(err)

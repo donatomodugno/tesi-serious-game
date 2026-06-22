@@ -8,7 +8,7 @@ import '@mantine/core/styles.css'
 import './Gameboard.css'
 import { Icon } from '../icons'
 import API from '../API'
-import { BpmnModelerComponent, BpmnViewer } from './'
+import { BpmnModeler, BpmnViewer } from './'
 
 const stock_cards = {
   'C1': {type: 'coins', name: '1 🪙', cost: 0, bonus: 1, draws: 0, buys: 0, turns: 0},
@@ -413,7 +413,7 @@ function Gameboard({logged}) {
     </>}
     {page=='loaded' && <>
       <Splitter h="92%">
-        <Splitter.Pane defaultSize={70} min={70}>
+        <Splitter.Pane defaultSize={70} min={70} collapsible>
           <Flex h="100%">
             <Box w={GRID.SEP+'%'}>
               <GameView
@@ -432,7 +432,7 @@ function Gameboard({logged}) {
           </Flex>
         </Splitter.Pane>
         <Splitter.Pane defaultSize={30} min={5}>
-          <BpmnModelerComponent/>
+          <BpmnModeler/>
         </Splitter.Pane>
       </Splitter>
     </>}

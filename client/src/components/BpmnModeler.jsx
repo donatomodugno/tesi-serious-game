@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
-import BpmnModeler from 'bpmn-js/lib/Modeler'
+import { default as Modeler } from 'bpmn-js/lib/Modeler'
+import { Flex } from '@mantine/core'
 import 'bpmn-js/dist/assets/diagram-js.css'
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css'
 
@@ -26,16 +27,16 @@ const emptyBpmnXML = `
   </bpmn:definitions>
 `
 
-const BpmnModelerComponent = () => {
+function BpmnModeler({showControls=false}) {
   const containerRef = useRef(null)
   const bpmnModelerRef = useRef(null)
 
   const exportDiagram = async () => {
     try {
-      var result = await bpmnModelerRef.current.saveXML({format: true})
+      const result = await bpmnModelerRef.current.saveXML({format: true})
       alert('Diagram exported. Check the developer tools!')
       console.log(result.xml)
-    } catch (err) {
+    } catch(err) {
       console.error('could not save BPMN 2.0 diagram', err)
     }
   }
@@ -51,7 +52,7 @@ const BpmnModelerComponent = () => {
   }
 
   useEffect(() => {
-    bpmnModelerRef.current = new BpmnModeler({
+    bpmnModelerRef.current = new Modeler({
       container: containerRef.current,
     })
     initializeCanvas()
@@ -62,11 +63,7 @@ const BpmnModelerComponent = () => {
     }
   }, [])
 
-  return (<>
-    <span>
-      <button onClick={() => console.log(containerRef)}>log</button>
-      <button onClick={exportDiagram}>export</button>
-    </span>
+  return <Flex direction="column" w="100%" h="500">
     <div
       ref={containerRef} 
       style={{ 
@@ -76,7 +73,10 @@ const BpmnModelerComponent = () => {
         backgroundColor: '#f8f9fa'
       }}
     />
-  </>)
+    {showControls && <span>
+      <button onClick={exportDiagram}>export</button>
+    </span>}
+  </Flex>
 }
 
-export default BpmnModelerComponent
+export default BpmnModeler

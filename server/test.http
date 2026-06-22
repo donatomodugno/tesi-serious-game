@@ -80,6 +80,7 @@ content-type: application/json
 {
     "ex_id": 1,
     "name": "Employer starts the task of the day",
+    "type": "bpmn",
     "cost": 4,
     "bonus": 0,
     "draws": 0,
@@ -95,7 +96,12 @@ content-type: application/json
 {
     "ex_id": 1,
     "name": "Card modificata",
-    "cost": 2
+    "type": "action",
+    "cost": 2,
+    "bonus": 0,
+    "draws": 0,
+    "buys": 0,
+    "turns": 0
 }
 
 ###

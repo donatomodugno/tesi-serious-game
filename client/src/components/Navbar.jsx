@@ -58,38 +58,7 @@ function ModalLogin({opened, close, login}) {
     }
 
     return <>
-        {/* <Modal
-            opened={opened}
-            onClose={close}
-            title={<Text size="xl" fw="bold" ml="10">Login</Text>}
-            transitionProps={{transition: 'pop-top-left'}}
-            size="xs"
-        >
-            <Flex direction="column" gap="md">
-                <TextInput
-                    leftSectionPointerEvents="none"
-                    leftSection="📧"
-                    label="Your email"
-                    placeholder="Your email"
-                    value={username}
-                    onChange={(ev) => setUsername(ev.target.value)}
-                />
-                <PasswordInput
-                    leftSectionPointerEvents="none"
-                    leftSection="🔒"
-                    label="Password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(ev) => setPassword(ev.target.value)}
-                />
-                {errorMessage ? <Text c="red">{errorMessage}</Text> : null}
-                <Flex justify="center" gap="md" mt="20">
-                    <Button onClick={close} color="grey" variant="light">Cancel</Button>
-                    <Button onClick={handleSubmit} color="green">Login</Button>
-                </Flex>
-            </Flex>
-        </Modal> */}
-        {/* Commentato perché non riuscivo a centrare il titolo */}
+        {/* Ho usato i singoli children di Modal xkè unico modo per centrare il titolo */}
         <Modal.Root
             opened={opened}
             onClose={close}

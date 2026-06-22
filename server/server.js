@@ -8,6 +8,23 @@ import dao from './dao.js'
 
 
 
+// EXPRESS SETUP
+
+const app = express()
+const PORT = 3001
+
+app.use(morgan('dev'))
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+}))
+app.use(express.json())
+app.listen(PORT, () => {
+    console.log('Server listening on http://localhost:'+PORT)
+})
+
+
+
 // PASSPORT SETUP
 
 passport.use(new LocalStrategy(
@@ -27,24 +44,8 @@ passport.deserializeUser((id, done) => {
     dao.getUserById(id)
         .then(user => done(null, user))
         .catch(err => done(err, null))
-}) // TODO: INVERTIRE PASSPORT SETUP / EXPRESS SETUP; RIMUOVERE GRAFFE QUA SOPRA NELLE THEN E CATCH
-
-
-
-// EXPRESS SETUP
-
-const app = express()
-const PORT = 3001
-
-app.use(morgan('dev'))
-app.use(cors({
-    origin: 'http://localhost:5173',
-    credentials: true,
-}))
-app.use(express.json())
-app.listen(PORT, () => {
-    console.log('Server listening on http://localhost:'+PORT)
 })
+
 
 
 // USER

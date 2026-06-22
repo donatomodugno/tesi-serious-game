@@ -1,26 +1,21 @@
 import ReactBpmn from 'react-bpmn'
+import { Box } from '@mantine/core'
 
-function BpmnViewer(props) {
+function BpmnViewer({src='prova1.bpmn', w='100%', h='100%'}) {
 
-  function onShown() {
-    console.log('diagram shown')
-  }
+  const onShown = () => console.log('diagram shown')
+  const onLoading = () => console.log('diagram loading')
+  const onError = (err) => console.log('failed to show diagram')
 
-  function onLoading() {
-    console.log('diagram loading')
-  }
-
-  function onError(err) {
-    console.log('failed to show diagram')
-  }
-
-  return <ReactBpmn
-		// url="prova1.bpmn"
-		url="../src/assets/empty.bpmn"
-		onShown={onShown}
-		onLoading={onLoading}
-		onError={onError}
-	/>
+  return <Box w={w} h={h}>
+    <ReactBpmn
+      url={src}
+      // url="../src/assets/empty.bpmn"
+      onShown={onShown}
+      onLoading={onLoading}
+      onError={onError}
+    />
+  </Box>
 }
 
 export default BpmnViewer

@@ -3,12 +3,8 @@ import { useParams, Navigate, Link } from 'react-router'
 import { Flex, ScrollArea, Table, Modal,
   Title, Text, Space, Button, Fieldset,
   TextInput, Input, InputBase, Slider, ActionIcon,
-  Combobox, useCombobox, Tooltip, Transition,
+  Combobox, useCombobox, Tooltip, Transition, 
   Loader, SegmentedControl, NumberInput } from '@mantine/core'
-import { BpmnModeler } from './'
-import { default as Modeler } from 'bpmn-js/lib/Modeler'
-import 'bpmn-js/dist/assets/diagram-js.css'
-import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css'
 import '@mantine/core/styles.css'
 import './Editor.css'
 import './Gameboard.css'
@@ -16,7 +12,7 @@ import { Icon, bpmn_icon } from '../icons'
 import API from '../API'
 
 const panels = ['20%', '40%', '20%']
-const new_card = {name: 'Card', type: 'bpmn', cost: 1, score: 0, bonus: 0, draws: 0, buys: 0, turns: 0, bpmn: ''}
+const new_card = {name: 'Card', type: 'bpmn', cost: 1, score: 0, bonus: 0, draws: 0, buys: 0, turns: 0}
 const new_block = {type: 'task', text: 'New block'}
 const block_types_groups = [
   {group: 'Tasks', children: [
@@ -127,75 +123,114 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard, loadCards, 
   </>
 }
 
-function EditBPMNElements({showControls=true}) {
-  const containerRef = useRef(null)
-  const bpmnModelerRef = useRef(null)
+function EditBlock({blocks, setBlocks, index, allowDelete}) {
+  const combobox = useCombobox()
 
-  const exportDiagram = async () => {
-    const result = await bpmnModelerRef.current.saveXML({format: true})
-    console.log(result.xml)
-  }
-
-  const initializeCanvas = async () => {
-    const emptyBpmnXML = `
-      <?xml version="1.0" encoding="UTF-8"?>
-      <bpmn:definitions
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-        xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
-        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
-        xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
-        targetNamespace="http://bpmn.io/schema/bpmn" 
-        id="Definitions_1"
-      >
-        <bpmn:process id="Process_1" isExecutable="false">
-        </bpmn:process>
-        <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-          <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-          </bpmndi:BPMNPlane>
-        </bpmndi:BPMNDiagram>
-      </bpmn:definitions>
-    `
-    await bpmnModelerRef.current.importXML(emptyBpmnXML)
-    const canvas = bpmnModelerRef.current.get('canvas')
-    canvas.zoom('fit-viewport')
-  }
-
-  useEffect(() => {
-    bpmnModelerRef.current = new Modeler({
-      container: containerRef.current,
-    })
-    initializeCanvas()
-    return () => {
-      if(bpmnModelerRef.current) {
-        bpmnModelerRef.current.destroy()
+  function findLabel(value) {
+    for(let g of block_types_groups) {
+      for(let c of g.children) {
+        if(c.value==value) return c.label
       }
     }
-  }, [])
+    return 'Invalid value'
+  }
 
-  return <Flex direction="column" w="100%" h="500">
-    <div
-      ref={containerRef} 
-      style={{ 
-        width: '100%', 
-        height: '100%', 
-        border: '1px solid #ccc',
-        backgroundColor: '#f8f9fa'
-      }}
-    />
-    {false && <span>
-      <button onClick={exportDiagram}>export</button>
-    </span>}
-    <Flex justify="center" align="center" gap="20" mt="20">
-      <Button color="grey" variant="light">Close</Button>
-      <Button color="green" variant="filled" size="lg">Save</Button>
-    </Flex>
-  </Flex>
+  const saveBlock = async () => {
+    await API.editBlock(blocks[index])
+  }
+
+  const deleteBlock = async () => {
+    await API.deleteBlock(blocks[index].id)
+    setBlocks(blocks.toSpliced(index, 1))
+  }
+
+  const handleTypeSubmit = async (type) => {
+    combobox.closeDropdown()
+    setBlocks(blocks.toSpliced(index, 1, {...blocks[index], type}))
+    await saveBlock()
+  }
+
+  const handleTextChange = ({currentTarget: {value}}) => {
+    setBlocks(blocks.toSpliced(index, 1, {...blocks[index], text: value}))
+  }
+
+  const handleTextBlur = async ({currentTarget: {value}}) => {
+    await saveBlock()
+  }
+
+  return <Fieldset
+    legend={
+      <Flex justify="space-between">
+        Block
+        <Tooltip
+          withArrow
+          label="Cards should have at least one block"
+          events={{hover: !allowDelete}}
+        >
+          <ActionIcon variant="default" onClick={deleteBlock} disabled={!allowDelete}>
+            <Icon.Delete color={allowDelete ? 'black' : 'grey'} />
+          </ActionIcon>
+        </Tooltip>
+      </Flex>
+    }
+    variant="filled"
+    classNames={{legend: 'fieldset-legend'}}
+  >
+    <Input.Wrapper label="Block type">
+      <Combobox
+        store={combobox}
+        onOptionSubmit={handleTypeSubmit}
+      >
+        <Combobox.Target>
+          <InputBase
+            component="button"
+            type="button"
+            pointer
+            rightSection={<Combobox.Chevron />}
+            rightSectionPointerEvents="none"
+            onClick={() => combobox.toggleDropdown()}
+          >
+            {findLabel(blocks[index]?.type)}
+          </InputBase>
+        </Combobox.Target>
+        <Combobox.Dropdown>
+          <Combobox.Options mah={200} style={{ overflowY: 'auto' }}>
+            {block_types_groups.map(({group, children}) => (
+              <Combobox.Group key={group} label={group}>
+                {children.map(({value, label}) => (
+                  <Combobox.Option key={value} value={value}>
+                    {label}
+                  </Combobox.Option>
+                ))}
+              </Combobox.Group>
+            ))}
+          </Combobox.Options>
+        </Combobox.Dropdown>
+      </Combobox>
+    </Input.Wrapper>
+    {['task', 'task-m', 'task-u', 'task-s', 'pool', 'lane'].includes(blocks[index]?.type) && <TextInput
+      label={
+        blocks[index]?.type=='pool'
+        ? 'Pool name'
+        : blocks[index]?.type=='lane'
+          ? 'Lane name'
+          : 'Task text'
+      }
+      placeholder={
+        ['pool', 'lane'].includes(blocks[index]?.type)
+        ? 'Insert the name of the '+blocks[index]?.type
+        : 'Insert the task to perform'
+      }
+      value={blocks[index]?.text}
+      onChange={handleTextChange}
+      onBlur={handleTextBlur}
+    />}
+  </Fieldset>
 }
 
 function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
   const c_id = cards[activeCard]?.id
   const [blocks, setBlocks] = useState([])
-  const [opened, setOpened] = useState(false)
 
   const loadBlocks = async () => {
     setBlocks(await API.getCardBlocks(cards[activeCard].id))
@@ -258,10 +293,6 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
     exitDuration={0}
   >
     {(s) => <Flex style={s} direction="column" gap="md" w={panels[1]} id="edit-panel">
-      <Modal opened={opened} onClose={() => setOpened(false)} size="xl" title="Unsaved work will be lost" closeOnClickOutside={false}>
-        <EditBPMNElements showControls/>
-        {/* <BpmnModeler showControls/> */}
-      </Modal>
       <Title order={3}>
         <Flex align="center" gap="sm">
           <Tooltip label="Go back to settings">
@@ -317,11 +348,9 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
                 onChangeEnd={handleCostChangeEnd}
               />
             </Input.Wrapper>
-            <Input.Wrapper
-              label="Score (secret)"
-              mt="20"
-            >
+            <Input.Wrapper label="Score (secret)">
               <Slider
+                // domain={[0.9, 8.1]}
                 min={-3}
                 max={6}
                 step={1}
@@ -335,9 +364,17 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
                 onChangeEnd={handleScoreChangeEnd}
               />
             </Input.Wrapper>
-            <Button color="green" my="40" onClick={() => setOpened(true)} leftSection={<Icon.PlusBlock color="white"/>}>
-              Edit BPMN elements
-            </Button>
+            <Space/>
+            {blocks.map((b, k) => (
+              <EditBlock
+                key={k}
+                blocks={blocks}
+                setBlocks={setBlocks}
+                index={k}
+                allowDelete={blocks.length>1}
+              />
+            ))}
+            <Button color="green" mb="20" onClick={addBlock} leftSection={<Icon.PlusBlock color="white"/>}>Add block</Button>
           </>}
           {cards[activeCard].type=='action' && <>
             <Input.Wrapper label="Cost">
@@ -355,10 +392,11 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
               />
             </Input.Wrapper>
             <Input.Wrapper
-              label="Bonus (or malus)"
+              label={'Bonus (or malus): '+cards[activeCard].bonus}
               mt="20"
             >
               <Slider
+                // domain={[-2, 3]}
                 min={-2}
                 max={3}
                 step={1}
