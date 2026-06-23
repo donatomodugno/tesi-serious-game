@@ -18,8 +18,9 @@ function App() {
           <Route path="/home" element={<Homepage logged={logged}/>}/>
           <Route path="/play/:id" element={<Gameboard logged={logged}/>}/>
           <Route path="/edit/:id" element={logged ? <Editor/> : <Navigate to="/home"/>}/>
-          <Route path="/bpmn" element={<BpmnViewer/>}/>
+          <Route path="/viewer" element={<BpmnViewer/>}/>
           <Route path="/modeler" element={<BpmnModeler/>}/>
+          <Route path="/diff" element={<BpmnModeler/>}/>
         </Routes>
       </Flex>
     </MantineProvider>

@@ -85,7 +85,8 @@ content-type: application/json
     "bonus": 0,
     "draws": 0,
     "buys": 0,
-    "turns": 0
+    "turns": 0,
+    "bpmn": ""
 }
 
 ###
@@ -101,7 +102,8 @@ content-type: application/json
     "bonus": 0,
     "draws": 0,
     "buys": 0,
-    "turns": 0
+    "turns": 0,
+    "bpmn": ""
 }
 
 ###

@@ -47,7 +47,8 @@ const db = new sqlite.Database('db.sqlite', (err) => {
                     bonus INTEGER DEFAULT 0,
                     draws INTEGER DEFAULT 0,
                     buys INTEGER DEFAULT 0,
-                    turns INTEGER DEFAULT 0
+                    turns INTEGER DEFAULT 0,
+                    bpmn TEXT DEFAULT ''
                 )
             `, catchError)
             db.run(`
@@ -226,8 +227,8 @@ exports.getCard = (id) => {
 
 exports.addCard = (card) => {
     return new Promise((resolve, reject) => {
-        const sql = "INSERT INTO cards(ex_id,name,type,cost,score,bonus,draws,buys,turns) VALUES(?,?,?,?,?,?,?,?,?)"
-        db.run(sql, [card.ex_id, card.name, card.type, card.cost, card.score, card.bonus, card.draws, card.buys, card.turns], function (err) {
+        const sql = "INSERT INTO cards(ex_id,name,type,cost,score,bonus,draws,buys,turns,bpmn) VALUES(?,?,?,?,?,?,?,?,?,?)"
+        db.run(sql, [card.ex_id, card.name, card.type, card.cost, card.score, card.bonus, card.draws, card.buys, card.turns, card.bpmn], function (err) {
             if(err) {
                 reject(err)
                 return
@@ -239,8 +240,8 @@ exports.addCard = (card) => {
 
 exports.editCard = (card) => {
     return new Promise((resolve, reject) => {
-        const sql = "UPDATE cards SET name=?,type=?,cost=?,score=?,bonus=?,draws=?,buys=?,turns=? WHERE id=?"
-        db.run(sql, [card.name, card.type, card.cost, card.score, card.bonus, card.draws, card.buys, card.turns, card.id], (err) => {
+        const sql = "UPDATE cards SET name=?,type=?,cost=?,score=?,bonus=?,draws=?,buys=?,turns=?,bpmn=? WHERE id=?"
+        db.run(sql, [card.name, card.type, card.cost, card.score, card.bonus, card.draws, card.buys, card.turns, card.bpmn, card.id], (err) => {
             if(err) {
                 reject(err)
                 return

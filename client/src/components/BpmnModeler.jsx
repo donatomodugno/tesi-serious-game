@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { default as Modeler } from 'bpmn-js/lib/Modeler'
 import { Flex } from '@mantine/core'
+import { default as Modeler } from 'bpmn-js/lib/Modeler'
 import 'bpmn-js/dist/assets/diagram-js.css'
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css'
 
@@ -27,7 +27,7 @@ const emptyBpmnXML = `
   </bpmn:definitions>
 `
 
-function BpmnModeler({showControls=false}) {
+function BpmnModeler({showControls=false, w='100%', h='500'}) {
   const containerRef = useRef(null)
   const bpmnModelerRef = useRef(null)
 
@@ -63,7 +63,7 @@ function BpmnModeler({showControls=false}) {
     }
   }, [])
 
-  return <Flex direction="column" w="100%" h="500">
+  return <Flex direction="column" w={w} h={h}>
     <div
       ref={containerRef} 
       style={{ 

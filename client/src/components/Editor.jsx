@@ -7,6 +7,7 @@ import { Flex, ScrollArea, Table, Modal,
   Loader, SegmentedControl, NumberInput } from '@mantine/core'
 import { BpmnModeler } from './'
 import { default as Modeler } from 'bpmn-js/lib/Modeler'
+import { default as Viewer } from 'bpmn-js/lib/NavigatedViewer'
 import 'bpmn-js/dist/assets/diagram-js.css'
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css'
 import '@mantine/core/styles.css'
@@ -82,7 +83,6 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard, loadCards, 
     loadCards()
   }, [])
 
-
   return <>
     <ModalDelete
       opened={cardToDelete>=0}
@@ -127,14 +127,9 @@ function CardsListPanel({cards, setCards, activeCard, setActiveCard, loadCards, 
   </>
 }
 
-function EditBPMNElements({showControls=true}) {
+function EditBPMNElements({closeModal, cards, setCards, activeCard}) {
   const containerRef = useRef(null)
   const bpmnModelerRef = useRef(null)
-
-  const exportDiagram = async () => {
-    const result = await bpmnModelerRef.current.saveXML({format: true})
-    console.log(result.xml)
-  }
 
   const initializeCanvas = async () => {
     const emptyBpmnXML = `
@@ -155,9 +150,16 @@ function EditBPMNElements({showControls=true}) {
         </bpmndi:BPMNDiagram>
       </bpmn:definitions>
     `
-    await bpmnModelerRef.current.importXML(emptyBpmnXML)
+    await bpmnModelerRef.current.importXML(cards[activeCard].bpmn || emptyBpmnXML)
     const canvas = bpmnModelerRef.current.get('canvas')
     canvas.zoom('fit-viewport')
+  }
+
+  const saveDiagram = async () => {
+    const result = await bpmnModelerRef.current.saveXML({format: false})
+    setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], bpmn: result.xml}))
+    await API.editCard({...cards[activeCard], bpmn: result.xml})
+    closeModal()
   }
 
   useEffect(() => {
@@ -182,13 +184,45 @@ function EditBPMNElements({showControls=true}) {
         backgroundColor: '#f8f9fa'
       }}
     />
-    {false && <span>
-      <button onClick={exportDiagram}>export</button>
-    </span>}
     <Flex justify="center" align="center" gap="20" mt="20">
-      <Button color="grey" variant="light">Close</Button>
-      <Button color="green" variant="filled" size="lg">Save</Button>
+      <Button color="grey" variant="light" onClick={closeModal}>Close</Button>
+      <Button color="green" variant="filled" onClick={saveDiagram}>Save</Button>
     </Flex>
+  </Flex>
+}
+
+function PreviewBPMNElements({cards, activeCard}) {
+  const containerRef = useRef(null)
+  const bpmnModelerRef = useRef(null)
+
+  const initializeCanvas = async () => {
+    await bpmnModelerRef.current.importXML(cards[activeCard].bpmn)
+    const canvas = bpmnModelerRef.current.get('canvas')
+    canvas.zoom('fit-viewport', 'auto')
+  }
+
+  useEffect(() => {
+    bpmnModelerRef.current = new Viewer({
+      container: containerRef.current,
+    })
+    initializeCanvas()
+    return () => {
+      if(bpmnModelerRef.current) {
+        bpmnModelerRef.current.destroy()
+      }
+    }
+  }, [activeCard])
+
+  return <Flex direction="column" w="100%" h="300" mb="50">
+    <div
+      ref={containerRef} 
+      style={{ 
+        width: '100%', 
+        height: '100%', 
+        border: '1px solid #ccc',
+        backgroundColor: '#f8f9fa'
+      }}
+    />
   </Flex>
 }
 
@@ -259,7 +293,7 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
   >
     {(s) => <Flex style={s} direction="column" gap="md" w={panels[1]} id="edit-panel">
       <Modal opened={opened} onClose={() => setOpened(false)} size="xl" title="Unsaved work will be lost" closeOnClickOutside={false}>
-        <EditBPMNElements showControls/>
+        <EditBPMNElements closeModal={() => setOpened(false)} cards={cards} setCards={setCards} activeCard={activeCard}/>
         {/* <BpmnModeler showControls/> */}
       </Modal>
       <Title order={3}>
@@ -335,9 +369,10 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
                 onChangeEnd={handleScoreChangeEnd}
               />
             </Input.Wrapper>
-            <Button color="green" my="40" onClick={() => setOpened(true)} leftSection={<Icon.PlusBlock color="white"/>}>
+            <Button color="green" mt="40" onClick={() => setOpened(true)} leftSection={<Icon.PlusBlock color="white"/>}>
               Edit BPMN elements
             </Button>
+            {cards[activeCard].bpmn && <PreviewBPMNElements cards={cards} activeCard={activeCard}/>}
           </>}
           {cards[activeCard].type=='action' && <>
             <Input.Wrapper label="Cost">

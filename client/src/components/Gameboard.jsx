@@ -2,7 +2,8 @@ import { use, useState, useEffect } from 'react'
 import { Link, Navigate, useParams } from 'react-router'
 import {
   Flex, Box, Space, Modal, Button, Title, Text, Splitter,
-  Loader, Progress, RingProgress, List, ColorSwatch
+  Loader, Progress, RingProgress, List, ColorSwatch,
+  Tooltip
 } from '@mantine/core'
 import '@mantine/core/styles.css'
 import './Gameboard.css'
@@ -142,6 +143,7 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
   return cards.bpmn && cards.action && <>
     <ModalGameAlert
       opened={modal!=null}
+      title={modal?.title}
       text={modal?.text}
       confirmText={modal?.confirmText}
       confirm={() => {
@@ -207,9 +209,10 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         valid={selCoins>=c.cost}
         task={() => {
           setModal({
+            title: 'BPMN preview',
             text: <>
-              <Title order={3}>BPMN preview</Title>
-              <BpmnViewer/>
+              {/* <Title order={3}>BPMN preview</Title> */}
+              <BpmnViewer bpmn={c.bpmn}/>
             </>,
             confirmText: 'Buy card',
             confirm: () => {
@@ -304,21 +307,24 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
   </>
 }
 
-function ModalGameAlert({opened, text, confirmText, confirm, cancel, disabled}) {
+function ModalGameAlert({opened, title='', text, confirmText, confirm, cancel, disabled}) {
   console.log(cancel)
   return <Modal
     opened={opened}
     onClose={cancel || (() => {})}
+    title={title && <Title order={3}>{title}</Title>}
     overlayProps={{backgroundOpacity: 0.5}}
     transitionProps={{transition: 'slide-up'}}
     centered
-    withCloseButton={false}
+    withCloseButton={title}
     size="auto"
   >
     <Flex justify="center" direction="column" ta="center">{text}</Flex>
     <Flex justify="center" gap="md" mt="20">
       {cancel && <Button color="grey" onClick={cancel}>Back</Button>}
-      <Button color="green" onClick={confirm} disabled={disabled}>{confirmText}</Button>
+      <Tooltip label="Not enough coins selected" withArrow arrowSize={7} events={{hover: disabled}}>
+        <Button color="green" onClick={confirm} disabled={disabled}>{confirmText}</Button>
+      </Tooltip>
     </Flex>
   </Modal>
 }
@@ -363,6 +369,7 @@ function Gameboard({logged}) {
   const [deck, setDeck] = useState([])
   const [progress, setProgress] = useState(0)
   const [page, setPage] = useState('loading')
+  const [collapsed, setCollapsed] = useState(-1)
   const ex_id = useParams().id
 
   const loadExercise = async () => {
@@ -412,7 +419,13 @@ function Gameboard({logged}) {
       </Flex>
     </>}
     {page=='loaded' && <>
-      <Splitter h="92%">
+      <Splitter
+        h="92%"
+        shiftStep={5}
+        handleColor={collapsed>=0 ? ['#090','orange'][collapsed] : '#006'}
+        lineSize={15}
+        onCollapseChange={(index, collapsed) => setCollapsed(collapsed ? index : -1)}
+      >
         <Splitter.Pane defaultSize={70} min={70} collapsible>
           <Flex h="100%">
             <Box w={GRID.SEP+'%'}>
@@ -431,8 +444,8 @@ function Gameboard({logged}) {
             </Box>
           </Flex>
         </Splitter.Pane>
-        <Splitter.Pane defaultSize={30} min={5}>
-          <BpmnModeler/>
+        <Splitter.Pane defaultSize={30} min={10} collapsible>
+          <BpmnModeler w="100%" h="100%"/>
         </Splitter.Pane>
       </Splitter>
     </>}
