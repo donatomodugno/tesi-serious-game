@@ -4,5 +4,7 @@ import Gameboard from './Gameboard'
 import Editor from './Editor'
 import BpmnModeler from './BpmnModeler'
 import BpmnViewer from './BpmnViewer'
+import BpmnDiff from './BpmnDiff'
+import BpmnCards from './BpmnCards'
 
-export { Navbar, Homepage, Gameboard, Editor, BpmnModeler, BpmnViewer }
+export { Navbar, Homepage, Gameboard, Editor, BpmnModeler, BpmnViewer, BpmnDiff, BpmnCards }

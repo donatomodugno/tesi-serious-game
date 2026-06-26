@@ -45,6 +45,12 @@
     border: 4px solid darkred;
 }
 
+.valid-bpmn:hover {
+    border: 6px solid #249;
+    cursor: pointer;
+    z-index: 10;
+}
+
 .flipped {
     transform: rotateY(180deg);
 }

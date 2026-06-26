@@ -13,6 +13,8 @@
     "@mantine/core": "^9.0.0",
     "@mantine/hooks": "^9.0.0",
     "bpmn-js": "^18.15.0",
+    "bpmn-js-differ": "^3.2.0",
+    "bpmn-moddle": "^10.0.0",
     "react": "^19.2.0",
     "react-bpmn": "^0.2.0",
     "react-dom": "^19.2.0",

@@ -45,7 +45,7 @@ function Card({card, x, y, task=()=>{}, flipped=false, clickable, valid, showCos
       }}
       onClick={clickable && (valid || card.type=='bpmn') ? task : () => {}}
     >
-      <div className={'card' + (flipped ? ' flipped' : '') + (clickable ? valid ? ' valid' : ' invalid' : '')}>
+      <div className={'card' + (flipped ? ' flipped' : '') + (clickable ? valid ? card.type=='bpmn' ? ' valid-bpmn' : ' valid' : ' invalid' : '')}>
         <Flex className="card-back"></Flex>
         <Flex
           className={'card-front type-'+card.type}
@@ -153,6 +153,7 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
       cancel={modal?.cancel || null}
       disabled={modal?.disabled || false}
       // confirm={modal?.confirm||(() => setModal(null))}
+      hideConfirm={modal?.hideConfirm || false}
     />
     <div id="game-bg">
       <Flex justify="center" align="center" style={{
@@ -206,14 +207,11 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         x={GRID.X1+k*GRID.DIST}
         y={GRID.Y1}
         clickable
-        valid={selCoins>=c.cost}
+        valid
         task={() => {
           setModal({
             title: 'BPMN preview',
-            text: <>
-              {/* <Title order={3}>BPMN preview</Title> */}
-              <BpmnViewer bpmn={c.bpmn}/>
-            </>,
+            text: <BpmnViewer bpmn={c.bpmn}/>,
             confirmText: 'Buy card',
             confirm: () => {
               setDeck((deck) => [...deck, {...c, x: GRID.X1+k*GRID.DIST, y: GRID.Y1, flipped: false}])
@@ -273,8 +271,8 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         card={c}
         x={GRID.X1+(hand>6 ? k*600/hand : k*GRID.DIST)}
         y={c.selected ? GRID.YSEL : GRID.Y3}
-        clickable={c.type!='bpmn'}
-        valid={c.type=='coins' || c.type=='action' && (c.draws || c.buys || c.turns)}
+        clickable
+        valid={c.type!='action' || (c.draws || c.buys || c.turns)}
         task={() => {
           if(c.type=='coins') {
             // Just select it
@@ -290,6 +288,15 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
             setTimeout(() => {
               setDeck((deck) => deck.toSpliced(-1, 1, {...c, x: undefined, y: undefined, flipped: undefined}))
             }, 100) // Delay of 1 millis just to render the animation
+          }
+          if(c.type=='bpmn') {
+            // Preview BPMN elements
+            setModal({
+              title: 'BPMN preview',
+              text: <BpmnViewer bpmn={c.bpmn}/>,
+              cancel: () => setModal(null),
+              hideConfirm: true
+            })
           }
         }}
         showCost={false}
@@ -307,7 +314,7 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
   </>
 }
 
-function ModalGameAlert({opened, title='', text, confirmText, confirm, cancel, disabled}) {
+function ModalGameAlert({opened, title='', text, confirmText, confirm, cancel, disabled, hideConfirm}) {
   console.log(cancel)
   return <Modal
     opened={opened}
@@ -322,9 +329,9 @@ function ModalGameAlert({opened, title='', text, confirmText, confirm, cancel, d
     <Flex justify="center" direction="column" ta="center">{text}</Flex>
     <Flex justify="center" gap="md" mt="20">
       {cancel && <Button color="grey" onClick={cancel}>Back</Button>}
-      <Tooltip label="Not enough coins selected" withArrow arrowSize={7} events={{hover: disabled}}>
+      {!hideConfirm && <Tooltip label="Not enough coins selected" withArrow arrowSize={7} events={{hover: disabled}}>
         <Button color="green" onClick={confirm} disabled={disabled}>{confirmText}</Button>
-      </Tooltip>
+      </Tooltip>}
     </Flex>
   </Modal>
 }
@@ -344,7 +351,7 @@ function ProgressPanel({logged, exercise, cards, deck, progress=0}) {
         </Progress.Section>
       </Progress.Root>
       <Title size="md" order={3} mt="30">Deck composition</Title>
-      <Text>N. of cards: {deck.length}</Text>
+      <Text>Obtained cards: {deck.length}</Text>
       <RingProgress
         label={<Title ta="center" pt="10"><Icon.Logo size="50" sw="20" fill="white" stroke="lightgrey"/></Title>}
         sections={[
@@ -355,9 +362,9 @@ function ProgressPanel({logged, exercise, cards, deck, progress=0}) {
         mt="-10" mb="-5"
       />
       <List>
-        <List.Item icon={<ColorSwatch color="#1AB" size={16}/>}>Actions</List.Item>
-        <List.Item icon={<ColorSwatch color="#FC0" size={16}/>}>Coins</List.Item>
-        <List.Item icon={<ColorSwatch color="#D48" size={16}/>}>BPMN elements</List.Item>
+        <List.Item icon={<ColorSwatch color="#1AB" size={16}/>}>{deck.filter(c => c.type=='action').length} Actions</List.Item>
+        <List.Item icon={<ColorSwatch color="#FC0" size={16}/>}>{deck.filter(c => c.type=='coins').length} Coins</List.Item>
+        <List.Item icon={<ColorSwatch color="#D48" size={16}/>}>{deck.filter(c => c.type=='bpmn').length} BPMN elements</List.Item>
       </List>
     </Flex>
   </>
