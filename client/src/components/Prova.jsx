@@ -36,8 +36,9 @@ function Prova({}) {
     const addLane = async () => {
         if(modelerRef.current) {
             const elementRegistry = modelerRef.current.get('elementRegistry')
-            const elements = elementRegistry.getAll()
+            const elementFactory = modelerRef.current.get('elementFactory')
             const modeling = modelerRef.current.get('modeling')
+            // const elements = elementRegistry.getAll()
 
             // const myTask = moddle.create('bpmn:UserTask', {id: 'Task_1', name: 'Nuovo task programmatico'})
             // console.log(elements)
@@ -58,14 +59,18 @@ function Prova({}) {
             // )
             // elements.push(newShape)
 
-            const parentElement = elementRegistry.get('Process_1') || elementRegistry.getAll().find(el => el.type=='bpmn:Process')
-            console.log(parentElement)
-            const newShape = modeling.createShape(
-                {type: 'bpmn:UserTask', businessObject: {name: 'Task Creato con Modeler'}},
-                {x: 400, y: 200},
-                parentElement
-            )
-            console.log('Nuovo elemento creato con ID:', newShape.id)
+            const process = elementRegistry.get('Process_1')
+            const startEvent = elementRegistry.get('StartEvent_1')
+            const newTask = elementFactory.createShape({type: 'bpmn:Task'})
+            modeling.createShape(newTask, {x: 400, y: 200}, process)
+            // modeling.createConnection(startEvent, newTask, { type: 'bpmn:SequenceFlow' }, process)
+            modeling.connect(startEvent, newTask) // Same thing
+
+            // const newShape = modeling.createShape(
+            //     {type: 'bpmn:UserTask', businessObject: {name: 'Task Creato con Modeler'}},
+            //     {x: 400, y: 200},
+            //     process
+            // )
         }
     }
 
@@ -75,10 +80,21 @@ function Prova({}) {
         canvas.zoom('fit-viewport')
     }
 
+    const save = async () => {
+        const {xml: testo} = await modelerRef.current.saveXML({format: true})
+        console.log(testo)
+    }
+
     useEffect(() => load, [bpmn])
 
     useEffect(() => {
-        modelerRef.current = new Modeler({container: containerRef.current})
+        modelerRef.current = new Modeler({
+            container: containerRef.current,
+            additionalModules: [{
+                autoPlace: ["value", {}],
+                bpmnAutoPlace: ["value", {}]
+            }]
+        })
         load()
         return () => {
             if(modelerRef.current) modelerRef.current.destroy()
@@ -87,7 +103,10 @@ function Prova({}) {
     
     {/* <BpmnViewer bpmn={bpmn} w="80%" h="80%"/> */}
     return <Flex direction="column" w="100%" h="100%" justify="center" align="center">
-        <button onClick={addLane}>cambia</button>
+        <Flex>
+            <button onClick={addLane}>cambia</button>
+            <button onClick={save}>esporta</button>
+        </Flex>
         <div
             ref={containerRef}
             style={{ 
