@@ -8,8 +8,9 @@ import API from '../API'
 // import mergeBpmn from './BpmnMerger'
 // import {mergeMultipleBpmnXml} from './BpmnMultiMerger'
 // import { parseXml, serializeXml, mergeBpmnXml } from './BpmnCustom'
-import mergeBpmnXML from './BpmnModdle'
-import ex_bpmn from '../assets/empty.bpmn?raw'
+// import mergeBpmnXML from './BpmnModdle'
+import anotherMerger from './AnotherMerger'
+import ex_bpmn from '../assets/empty2.bpmn?raw'
 
 function BpmnCards({bpmn, w='100%', h='100%'}) {
   const containerRef = useRef(null)
@@ -25,7 +26,7 @@ function BpmnCards({bpmn, w='100%', h='100%'}) {
   const loadCards = async () => {
     setCards((await API.getCards()).filter(c => c.type=='bpmn' && c.bpmn!=''))
     // console.log(serializeXml(parseXml(ex_bpmn)))
-    console.log(await mergeBpmnXML(ex_bpmn, ex_bpmn))
+    // console.log(await mergeBpmnXML(ex_bpmn, ex_bpmn))
   }
 
   useEffect(() => {
@@ -44,10 +45,11 @@ function BpmnCards({bpmn, w='100%', h='100%'}) {
   return <Flex direction="column" w={w} h={h}>
     <Flex>
       {cards.map((c, k) => <button key={k} onClick={async () => {
-        await bpmnModelerRef.current.importXML((await bpmnModelerRef.current.saveXML({format: false})) + c.bpmn)
+        // await bpmnModelerRef.current.importXML((await bpmnModelerRef.current.saveXML({format: false})) + c.bpmn)
         // await bpmnModelerRef.current.importXML(mergeMultipleBpmnXml([await bpmnModelerRef.current.saveXML({format: false}), c.bpmn]))
-        // const currentXML = (await bpmnModelerRef.current.saveXML({format: false})).xml
-        const merged = await mergeBpmnXML(currentXML, c.bpmn)
+        const currentXML = (await bpmnModelerRef.current.saveXML({format: false})).xml
+        // const merged = await mergeBpmnXML(currentXML, c.bpmn)
+        const merged = anotherMerger(currentXML, c.bpmn)
         console.log('merged:',merged)
         await bpmnModelerRef.current.importXML(merged)
       }}>{c.name}</button>)}

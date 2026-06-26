@@ -4,7 +4,7 @@ import { BpmnModdle } from 'bpmn-moddle'
 import { default as Modeler } from 'bpmn-js/lib/Modeler'
 import { BpmnViewer } from './'
 import provaXML from '../assets/a.bpmn?raw'
-import emptyXML from '../assets/empty.bpmn?raw'
+import emptyXML from '../assets/empty2.bpmn?raw'
 
 const moddle = new BpmnModdle()
 // const modeler = new Modeler({container: '#prova'})
@@ -33,6 +33,13 @@ function Prova({}) {
     const containerRef = useRef(null)
     const modelerRef = useRef(null)
 
+    const stampa = () => {
+        if(modelerRef.current) {
+            const elementRegistry = modelerRef.current.get('elementRegistry')
+            console.log(elementRegistry.getAll())
+        }
+    }
+
     const addLane = async () => {
         if(modelerRef.current) {
             const elementRegistry = modelerRef.current.get('elementRegistry')
@@ -59,18 +66,12 @@ function Prova({}) {
             // )
             // elements.push(newShape)
 
-            const process = elementRegistry.get('Process_1')
+            const process = elementRegistry.getAll().find(e => e.type=='bpmn:Process')
             const startEvent = elementRegistry.get('StartEvent_1')
             const newTask = elementFactory.createShape({type: 'bpmn:Task'})
+            newTask.businessObject.name = 'provetta' // Eureka!!!
             modeling.createShape(newTask, {x: 400, y: 200}, process)
-            // modeling.createConnection(startEvent, newTask, { type: 'bpmn:SequenceFlow' }, process)
-            modeling.connect(startEvent, newTask) // Same thing
-
-            // const newShape = modeling.createShape(
-            //     {type: 'bpmn:UserTask', businessObject: {name: 'Task Creato con Modeler'}},
-            //     {x: 400, y: 200},
-            //     process
-            // )
+            modeling.connect(startEvent, newTask)
         }
     }
 
@@ -85,16 +86,10 @@ function Prova({}) {
         console.log(testo)
     }
 
-    useEffect(() => load, [bpmn])
+    // useEffect(() => load, [bpmn])
 
     useEffect(() => {
-        modelerRef.current = new Modeler({
-            container: containerRef.current,
-            additionalModules: [{
-                autoPlace: ["value", {}],
-                bpmnAutoPlace: ["value", {}]
-            }]
-        })
+        modelerRef.current = new Modeler({container: containerRef.current})
         load()
         return () => {
             if(modelerRef.current) modelerRef.current.destroy()
@@ -106,6 +101,7 @@ function Prova({}) {
         <Flex>
             <button onClick={addLane}>cambia</button>
             <button onClick={save}>esporta</button>
+            <button onClick={stampa}>log</button>
         </Flex>
         <div
             ref={containerRef}
