@@ -44,7 +44,7 @@ function BpmnViewer({bpmn, w='100%', h='300'}) {
         bpmnModelerRef.current.destroy()
       }
     }
-  }, [])
+  }, [bpmn])
 
   return <Flex direction="column" w={w} h={h}>
     <div

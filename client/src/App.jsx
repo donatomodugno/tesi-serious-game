@@ -2,7 +2,7 @@ import '@mantine/core/styles.css'
 import { MantineProvider, Flex, Box, Stack, TextInput, Checkbox, Button, Title } from '@mantine/core'
 import { useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router'
-import { Navbar, Homepage, Gameboard, Editor, BpmnViewer, BpmnModeler, BpmnDiff, BpmnCards } from './components'
+import { Navbar, Homepage, Gameboard, Editor, BpmnViewer, BpmnModeler, BpmnDiff, BpmnCards, Prova } from './components'
 import './App.css'
 import API from './API'
 
@@ -22,6 +22,7 @@ function App() {
           <Route path="/modeler" element={<BpmnModeler/>}/>
           <Route path="/diff" element={<BpmnDiff/>}/>
           <Route path="/cards" element={<BpmnCards/>}/>
+          <Route path="/moddle" element={<Prova/>}/>
         </Routes>
       </Flex>
     </MantineProvider>
