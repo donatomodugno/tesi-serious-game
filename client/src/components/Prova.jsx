@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Flex } from '@mantine/core'
+import API from '../API'
 import { BpmnModdle } from 'bpmn-moddle'
 import { default as Modeler } from 'bpmn-js/lib/Modeler'
 import { BpmnViewer } from './'
@@ -86,6 +87,52 @@ function Prova({}) {
         console.log(testo)
     }
 
+    const loadCard = async () => {
+        // if(modelerRef.current) {
+        //     const elementRegistry = modelerRef.current.get('elementRegistry')
+        //     const elementFactory = modelerRef.current.get('elementFactory')
+        //     const modeling = modelerRef.current.get('modeling')
+        //     const card = (await API.getCards()).filter(c => c.type=='bpmn' && c.bpmn!='')[0]
+        //     const nodes = await moddle.fromXML(card.bpmn)
+        //     console.log(elementRegistry.getAll())
+        //     console.log(nodes)
+        //     // elementRegistry.add(nodes)
+
+        //     const plane = elementRegistry.get('BPMNDiagram_1')
+        //     const biz = plane.businessObject
+        //     biz.get('extensionElements').get('values').push(nodes)
+        //     modeling.updateProperties(plane, { 
+        //         extensionElements: biz.extensionElements 
+        //     })
+        // }
+        
+        if(modelerRef.current) {
+            const tempModeler = new Modeler()
+            const card = (await API.getCards()).filter(c => c.type=='bpmn' && c.bpmn!='')[0]
+            await tempModeler.importXML(card.bpmn)
+            const tempElementRegistry = tempModeler.get('elementRegistry')
+            const tempCP = tempModeler.get('copyPaste')
+            const tempClip = tempModeler.get('clipboard')
+            const mainCP = modelerRef.current.get('copyPaste')
+            const mainClip = modelerRef.current.get('clipboard')
+            const elementsToCopy = tempElementRegistry.filter(element => 
+                element.type !== 'bpmn:Process' && 
+                element.type !== 'bpmn:Collaboration' &&
+                !element.labelTarget
+            )
+            if(elementsToCopy.length==0) { return }
+            tempCP.copy(elementsToCopy)
+            const clipboardData = tempClip.get()
+            mainClip.set(clipboardData)
+            mainCP.paste({
+                element: modelerRef.current.get('canvas').getRootElement(),
+                point: {x: 300, y: 300},
+            })
+            tempModeler.destroy()
+            // EUREKA X2 !!!!!!!!!
+        }
+    }
+
     // useEffect(() => load, [bpmn])
 
     useEffect(() => {
@@ -102,6 +149,7 @@ function Prova({}) {
             <button onClick={addLane}>cambia</button>
             <button onClick={save}>esporta</button>
             <button onClick={stampa}>log</button>
+            <button onClick={loadCard}>card</button>
         </Flex>
         <div
             ref={containerRef}
