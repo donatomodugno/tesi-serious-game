@@ -7,9 +7,10 @@ import { Flex, ScrollArea, Table, Modal,
   Loader, SegmentedControl, NumberInput } from '@mantine/core'
 import { BpmnModeler } from './'
 import { default as Modeler } from 'bpmn-js/lib/Modeler'
-import { default as Viewer } from 'bpmn-js/lib/NavigatedViewer'
+import { default as Viewer } from 'bpmn-js/lib/Viewer'
 import 'bpmn-js/dist/assets/diagram-js.css'
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css'
+import emptyBpmnXML from '../assets/empty2.bpmn?raw'
 import '@mantine/core/styles.css'
 import './Editor.css'
 import './Gameboard.css'
@@ -211,7 +212,7 @@ function PreviewBPMNElements({cards, activeCard}) {
         bpmnModelerRef.current.destroy()
       }
     }
-  }, [activeCard])
+  }, [activeCard, cards[activeCard]])
 
   return <Flex direction="column" w="100%" h="300" mb="50">
     <div
@@ -294,7 +295,6 @@ function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
     {(s) => <Flex style={s} direction="column" gap="md" w={panels[1]} id="edit-panel">
       <Modal opened={opened} onClose={() => setOpened(false)} size="xl" title="Unsaved work will be lost" closeOnClickOutside={false}>
         <EditBPMNElements closeModal={() => setOpened(false)} cards={cards} setCards={setCards} activeCard={activeCard}/>
-        {/* <BpmnModeler showControls/> */}
       </Modal>
       <Title order={3}>
         <Flex align="center" gap="sm">
@@ -480,8 +480,86 @@ function CardPreviewPanel({cards, activeCard}) {
   </Transition>
 }
 
+function EditBPMNSolution({closeModal, exercise, setExercise}) {
+  const containerRef = useRef(null)
+  const bpmnModelerRef = useRef(null)
+
+  const init = async () => {
+    await bpmnModelerRef.current.importXML(exercise.bpmn || emptyBpmnXML)
+    const canvas = bpmnModelerRef.current.get('canvas')
+    canvas.zoom('fit-viewport')
+  }
+
+  const save = async () => {
+    const result = await bpmnModelerRef.current.saveXML({format: false})
+    setExercise({...exercise, bpmn: result.xml})
+    await API.editExercise({...exercise, bpmn: result.xml})
+    closeModal()
+  }
+
+  useEffect(() => {
+    bpmnModelerRef.current = new Modeler({container: containerRef.current})
+    init()
+    return () => {
+      if(bpmnModelerRef.current) {
+        bpmnModelerRef.current.destroy()
+      }
+    }
+  }, [])
+
+  return <Flex direction="column" w="100%" h="540">
+    <div
+      ref={containerRef} 
+      style={{ 
+        width: '100%',
+        height: '100%',
+        border: '1px solid #ccc',
+        backgroundColor: '#f8f9fa'
+      }}
+    />
+    <Flex justify="center" align="center" gap="20" mt="20">
+      <Button color="grey" variant="light" onClick={closeModal}>Close</Button>
+      <Button color="green" variant="filled" onClick={save}>Save</Button>
+    </Flex>
+  </Flex>
+}
+
+function PreviewBPMNSolution({exercise}) {
+  const containerRef = useRef(null)
+  const bpmnModelerRef = useRef(null)
+
+  const init = async () => {
+    await bpmnModelerRef.current.importXML(exercise.bpmn || emptyBpmnXML)
+    const canvas = bpmnModelerRef.current.get('canvas')
+    canvas.zoom('fit-viewport', 'auto')
+  }
+
+  useEffect(() => {
+    bpmnModelerRef.current = new Viewer({container: containerRef.current})
+    init()
+    return () => {
+      if(bpmnModelerRef.current) {
+        bpmnModelerRef.current.destroy()
+      }
+    }
+  }, [exercise])
+
+  return <Flex direction="column" w="100%" h="300" mb="50">
+    <div
+      ref={containerRef} 
+      style={{ 
+        width: '100%', 
+        height: '100%', 
+        border: '1px solid #ccc',
+        backgroundColor: '#f8f9fa'
+      }}
+    />
+  </Flex>
+}
+
 function SettingsPanel({exercise, setExercise, cards, activeCard, deleteCards}) {
   const [openedModalDelete, setOpenedModalDelete] = useState(false)
+  const [openedEdit, setOpenedEdit] = useState(false)
   const [difficulty, setDifficulty] = useState({})
 
   useEffect(() => {
@@ -521,61 +599,72 @@ function SettingsPanel({exercise, setExercise, cards, activeCard, deleteCards}) 
     exitDuration={0}
   >
     {(s) => <Flex style={s} direction="column" gap="md" w={panels[1]} id="settings-panel">
+      <Modal opened={openedEdit} onClose={() => setOpenedEdit(false)} size="90%" title="Unsaved work will be lost" closeOnClickOutside={false}>
+        <EditBPMNSolution closeModal={() => setOpenedEdit(false)} exercise={exercise} setExercise={setExercise}/>
+      </Modal>
       <Flex justify="space-between" w="100%">
         <Title order={3}>Exercise settings</Title>
-          <Link to={'/play/'+exercise.id}>
-            <Button color="green" rightSection={<Icon.Play color="white"/>}>Play test</Button>
-          </Link>
+        <Link to={'/play/'+exercise.id}>
+          <Button color="green" rightSection={<Icon.Play color="white"/>}>Play test</Button>
+        </Link>
       </Flex>
-      <TextInput
-        label="Title"
-        placeholder="Insert exercise title here"
-        maxLength="40"
-        error={!exercise.name && 'Title can\'t be empty'}
-        value={exercise.name}
-        onChange={handleTitleChange}
-        onBlur={handleTitleBlur}
-      />
-      <Input.Wrapper
-        label={'Total turns: '+exercise.turns}
-        error={difficulty.label || 'ciao'}
-        errorProps={{c: difficulty.color, fz: 'md', fw: 600}}
-      >
-        <Slider
-          domain={[1, 30]}
-          min={18}
-          max={30}
-          step={1}
-          marks={[18, 21, 24, 27, 30].map(v => ({value: v, label: v}))}
-          size="lg"
-          color={difficulty.color}
-          value={exercise.turns}
-          onChange={handleTurnsChange}
-          onChangeEnd={handleTurnsChangeEnd}
-        />
-      </Input.Wrapper>
-      <Fieldset legend={<Text fz="sm" fw={600}>Stats</Text>}>
-        N. of cards: {cards.length}
-      </Fieldset>
-      <Fieldset legend={<Text fz="sm" fw={600}>Danger zone</Text>} variant="filled">
-        <Button color="red" onClick={() => setOpenedModalDelete(true)}>Delete all cards</Button>
-        <ModalDelete
-          opened={openedModalDelete}
-          close={() => setOpenedModalDelete(false)}
-          confirm={() => {
-            deleteCards()
-            setOpenedModalDelete(false)
-          }}
-          title={
-            <Flex align="center" gap="sm">
-              <Icon.Delete color="red"/>
-              <Text span fw="700"> Delete all cards</Text>
-            </Flex>
-          }
-          text="Are you sure to delete ALL cards in this exercise?"
-          variant=""
-        />
-      </Fieldset>
+      <ScrollArea h="100%">
+        <Flex direction="column" gap="md" id="edit-area">
+          <TextInput
+            label="Title"
+            placeholder="Insert exercise title here"
+            maxLength="40"
+            error={!exercise.name && 'Title can\'t be empty'}
+            value={exercise.name}
+            onChange={handleTitleChange}
+            onBlur={handleTitleBlur}
+          />
+          <Input.Wrapper
+            label={'Total turns: '+exercise.turns}
+            error={difficulty.label || 'ciao'}
+            errorProps={{c: difficulty.color, fz: 'md', fw: 600}}
+          >
+            <Slider
+              domain={[1, 30]}
+              min={18}
+              max={30}
+              step={1}
+              marks={[18, 21, 24, 27, 30].map(v => ({value: v, label: v}))}
+              size="lg"
+              color={difficulty.color}
+              value={exercise.turns}
+              onChange={handleTurnsChange}
+              onChangeEnd={handleTurnsChangeEnd}
+            />
+          </Input.Wrapper>
+          <Button color="green" mt="40" onClick={() => setOpenedEdit(true)} leftSection={<Icon.PlusBlock color="white"/>}>
+            Edit BPMN solution
+          </Button>
+          <PreviewBPMNSolution exercise={exercise}/>
+          <Fieldset legend={<Text fz="sm" fw={600}>Stats</Text>}>
+            N. of cards: {cards.length}
+          </Fieldset>
+          <Fieldset legend={<Text fz="sm" fw={600}>Danger zone</Text>} variant="filled" mb="80">
+            <Button color="red" onClick={() => setOpenedModalDelete(true)}>Delete all cards</Button>
+            <ModalDelete
+              opened={openedModalDelete}
+              close={() => setOpenedModalDelete(false)}
+              confirm={() => {
+                deleteCards()
+                setOpenedModalDelete(false)
+              }}
+              title={
+                <Flex align="center" gap="sm">
+                  <Icon.Delete color="red"/>
+                  <Text span fw="700"> Delete all cards</Text>
+                </Flex>
+              }
+              text="Are you sure to delete ALL cards in this exercise?"
+              variant=""
+            />
+          </Fieldset>
+        </Flex>
+      </ScrollArea>
     </Flex>}
   </Transition>
 }
@@ -585,7 +674,7 @@ function Editor({}) {
   const [cards, setCards] = useState([])
   const [activeCard, setActiveCard] = useState(-1)
   const [page, setPage] = useState('loading')
-  const ex_id = useParams().id
+  const {ex_id} = useParams()
   
   const loadExercise = async () => {
     const ex = await API.getExercise(ex_id)

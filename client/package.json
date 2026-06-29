@@ -10,11 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mantine/carousel": "^9.4.1",
     "@mantine/core": "^9.0.0",
     "@mantine/hooks": "^9.0.0",
     "bpmn-js": "^18.15.0",
     "bpmn-js-differ": "^3.2.0",
     "bpmn-moddle": "^10.0.0",
+    "embla-carousel": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
     "react": "^19.2.0",
     "react-bpmn": "^0.2.0",
     "react-dom": "^19.2.0",

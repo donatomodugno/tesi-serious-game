@@ -33,7 +33,8 @@ const db = new sqlite.Database('db.sqlite', (err) => {
                 CREATE TABLE IF NOT EXISTS exercises(
                     id INTEGER PRIMARY KEY,
                     name TEXT NOT NULL,
-                    turns INTEGER NOT NULL
+                    turns INTEGER NOT NULL,
+                    bpmn TEXT DEFAULT ''
                 )
             `, catchError)
             db.run(`
@@ -52,11 +53,10 @@ const db = new sqlite.Database('db.sqlite', (err) => {
                 )
             `, catchError)
             db.run(`
-                CREATE TABLE IF NOT EXISTS blocks(
+                CREATE TABLE IF NOT EXISTS results(
                     id INTEGER PRIMARY KEY,
-                    c_id INTEGER NOT NULL,
-                    type TEXT NOT NULL,
-                    text TEXT
+                    ex_id INTEGER NOT NULL,
+                    bpmn TEXT NOT NULL
                 )
             `, catchError)
         })
@@ -74,6 +74,7 @@ exports.clear = () => {
         db.run(`DROP TABLE IF EXISTS exercises`, (err) => { if(err) console.error(err.message) })
         db.run(`DROP TABLE IF EXISTS cards`, (err) => { if(err) console.error(err.message) })
         db.run(`DROP TABLE IF EXISTS blocks`, (err) => { if(err) console.error(err.message) })
+        db.run(`DROP TABLE IF EXISTS results`, (err) => { if(err) console.error(err.message) })
     })
 }
 
@@ -145,8 +146,8 @@ exports.getExercise = (id) => {
 
 exports.addExercise = (exer) => {
     return new Promise((resolve, reject) => {
-        const sql = "INSERT INTO exercises(name,turns) VALUES(?,?)"
-        db.run(sql, [exer.name, exer.turns], function (err) {
+        const sql = "INSERT INTO exercises(name,turns,bpmn) VALUES(?,?,?)"
+        db.run(sql, [exer.name, exer.turns, exer.bpmn], function (err) {
             if(err) {
                 reject(err)
                 return
@@ -158,8 +159,8 @@ exports.addExercise = (exer) => {
 
 exports.editExercise = (exer) => {
     return new Promise((resolve, reject) => {
-        const sql = "UPDATE exercises SET name=?,turns=? WHERE id=?"
-        db.run(sql, [exer.name, exer.turns, exer.id], (err) => {
+        const sql = "UPDATE exercises SET name=?,turns=?,bpmn=? WHERE id=?"
+        db.run(sql, [exer.name, exer.turns, exer.bpmn, exer.id], (err) => {
             if(err) {
                 reject(err)
                 return
@@ -363,6 +364,101 @@ exports.deleteCardBlocks = (c_id) => {
     return new Promise((resolve, reject) => {
         const sql = "DELETE FROM blocks WHERE c_id=?"
         db.run(sql, [c_id], (err) => {
+            if(err) {
+                reject(err)
+                return
+            }
+            resolve()
+        })
+    })
+}
+
+
+
+// RESULTS (DAO)
+
+exports.listResults = () => {
+    return new Promise((resolve, reject) => {
+        const sql = "SELECT * FROM results"
+        db.all(sql, [], (err, rows) => {
+            if(err) {
+                reject(err)
+                return
+            }
+            resolve(rows)
+        })
+    })
+}
+
+exports.listExerciseResults = (ex_id) => {
+    return new Promise((resolve, reject) => {
+        const sql = "SELECT * FROM results WHERE ex_id=?"
+        db.all(sql, [ex_id], (err, rows) => {
+            if(err) {
+                reject(err)
+                return
+            }
+            resolve(rows)
+        })
+    })
+}
+
+exports.getResult = (id) => {
+    return new Promise((resolve, reject) => {
+        const sql = "SELECT * FROM results WHERE id=?"
+        db.get(sql, [id], (err, row) => {
+            if(err) {
+                reject(err)
+                return
+            }
+            resolve(row)
+        })
+    })
+}
+
+exports.addResult = (res) => {
+    return new Promise((resolve, reject) => {
+        const sql = "INSERT INTO results(ex_id,bpmn) VALUES(?,?)"
+        db.run(sql, [res.ex_id, res.bpmn], function (err) {
+            if(err) {
+                reject(err)
+                return
+            }
+            resolve(this.lastID)
+        })
+    })
+}
+
+exports.editResult = (res) => {
+    return new Promise((resolve, reject) => {
+        const sql = "UPDATE results SET ex_id=?,bpmn=? WHERE id=?"
+        db.run(sql, [res.ex_id, res.bpmn, res.id], (err) => {
+            if(err) {
+                reject(err)
+                return
+            }
+            resolve()
+        })
+    })
+}
+
+exports.deleteResult = (id) => {
+    return new Promise((resolve, reject) => {
+        const sql = "DELETE FROM results WHERE id=?"
+        db.run(sql, [id], (err) => {
+            if(err) {
+                reject(err)
+                return
+            }
+            resolve()
+        })
+    })
+}
+
+exports.deleteExerciseResults = (ex_id) => {
+    return new Promise((resolve, reject) => {
+        const sql = "DELETE FROM results WHERE ex_id=?"
+        db.run(sql, [ex_id], (err) => {
             if(err) {
                 reject(err)
                 return

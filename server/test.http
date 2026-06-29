@@ -45,7 +45,8 @@ content-type: application/json
 
 {
     "name": "Edited name",
-    "turns": 24
+    "turns": 24,
+    "bpmn": ""
 }
 
 ###

@@ -108,7 +108,7 @@ function Prova({}) {
         
         if(modelerRef.current) {
             const tempModeler = new Modeler()
-            const card = (await API.getCards()).filter(c => c.type=='bpmn' && c.bpmn!='')[0]
+            const card = (await API.getCards()).find(c => c.type=='bpmn' && c.bpmn!='')
             await tempModeler.importXML(card.bpmn)
             const tempElementRegistry = tempModeler.get('elementRegistry')
             const tempCP = tempModeler.get('copyPaste')

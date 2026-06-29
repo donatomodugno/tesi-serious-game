@@ -7,5 +7,6 @@ import BpmnViewer from './BpmnViewer'
 import BpmnDiff from './BpmnDiff'
 import BpmnCards from './BpmnCards'
 import Prova from './Prova'
+import Results from './Results'
 
-export { Navbar, Homepage, Gameboard, Editor, BpmnModeler, BpmnViewer, BpmnDiff, BpmnCards, Prova }
+export { Navbar, Homepage, Gameboard, Editor, BpmnModeler, BpmnViewer, BpmnDiff, BpmnCards, Prova, Results }

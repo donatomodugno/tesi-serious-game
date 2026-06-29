@@ -380,3 +380,78 @@ app.delete('/api/blocks/:c_id', async (req, res) => {
         res.status(503).json(err)
     }
 })
+
+
+
+// RESULTS
+
+app.get('/api/results', async (req, res) => {
+    try {
+        const results = await dao.listResults()
+        console.log(results)
+        res.status(200).json(results)
+    } catch(err) {
+        res.status(503).json(err)
+    }
+})
+
+app.get('/api/results/:ex_id', async (req, res) => {
+    try {
+        const results = await dao.listExerciseResults(req.params.ex_id)
+        console.log(results)
+        res.status(200).json(results)
+    } catch(err) {
+        res.status(503).json(err)
+    }
+})
+
+app.get('/api/result/:id', async (req, res) => {
+    try {
+        const result = await dao.getResult(req.params.id)
+        console.log(result)
+        if(!result) res.status(404).end()
+        else res.status(200).json(result)
+    } catch(err) {
+        res.status(503).json(err)
+    }
+})
+
+app.post('/api/result', async (req, res) => {
+    try {
+        const id = await dao.addResult(req.body)
+        console.log('Insertion done.')
+        res.status(200).send(id)
+    } catch(err) {
+        res.status(503).json(err)
+    }
+})
+
+app.put('/api/result/:id', async (req, res) => {
+    try {
+        await dao.editResult({...req.body, id: req.params.id})
+        console.log('Update done.')
+        res.status(200).send('Result updated in db.')
+    } catch(err) {
+        res.status(503).json(err)
+    }
+})
+
+app.delete('/api/result/:id', async (req, res) => {
+    try {
+        await dao.deleteResult(req.params.id)
+        console.log('Delete done.')
+        res.status(200).send('Result deleted from db.')
+    } catch(err) {
+        res.status(503).json(err)
+    }
+})
+
+app.delete('/api/results/:ex_id', async (req, res) => {
+    try {
+        await dao.deleteExerciseResults(req.params.ex_id)
+        console.log('Deletes done.')
+        res.status(200).send('Results deleted from db.')
+    } catch(err) {
+        res.status(503).json(err)
+    }
+})

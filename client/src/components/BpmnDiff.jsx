@@ -38,12 +38,12 @@ function BpmnDiff({bpmn, w='100%', h='100%'}) {
     <Flex direction="column" w="40%">
       <Table>
         <Table.Tbody>
-          {Object.values(changes._changed).map((val, k) => <Table.Tr key={k} bg="yellow">
+          {Object.values(changes._changed).map((val, k) => <Table.Tr key={k} bg="yellow" variant="light">
             <Table.Th>Changed</Table.Th>
             <Table.Td>{(val.$type || val.model.$type).slice(5)}</Table.Td>
             <Table.Td>{val.name}</Table.Td>
           </Table.Tr>)}
-          {Object.values(changes._removed).map((val, k) => <Table.Tr key={k} bg="red">
+          {Object.values(changes._removed).map((val, k) => <Table.Tr key={k} bg="red" variant="light">
             <Table.Th>Removed</Table.Th>
             <Table.Td>{val.$type.slice(5)}</Table.Td>
             <Table.Td>{val.name}</Table.Td>

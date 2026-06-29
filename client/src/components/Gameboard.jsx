@@ -1,4 +1,4 @@
-import { use, useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, Navigate, useParams } from 'react-router'
 import {
   Flex, Box, Space, Modal, Button, Title, Text, Splitter,
@@ -10,6 +10,8 @@ import './Gameboard.css'
 import { Icon } from '../icons'
 import API from '../API'
 import { BpmnModeler, BpmnViewer } from './'
+import { default as Modeler } from 'bpmn-js/lib/Modeler'
+import emptyBpmnXml from '../assets/empty2.bpmn?raw'
 
 const stock_cards = {
   'C1': {type: 'coins', name: '1 🪙', cost: 0, bonus: 1, draws: 0, buys: 0, turns: 0},
@@ -33,9 +35,10 @@ function shuffle(arr) {
   return arr
 }
 
-function Card({card, x, y, task=()=>{}, flipped=false, clickable, valid, showCost=true}) {
+function Card({ref, card, x, y, task=()=>{}, flipped=false, clickable, valid, showCost=true}) {
   return <>
     <div
+      ref={ref}
       className="card-hitbox"
       style={{
         position: 'absolute',
@@ -45,7 +48,7 @@ function Card({card, x, y, task=()=>{}, flipped=false, clickable, valid, showCos
       }}
       onClick={clickable && (valid || card.type=='bpmn') ? task : () => {}}
     >
-      <div className={'card' + (flipped ? ' flipped' : '') + (clickable ? valid ? card.type=='bpmn' ? ' valid-bpmn' : ' valid' : ' invalid' : '')}>
+      <div className={'card' + (flipped ? ' flipped' : '') + (clickable ? valid ? ' valid' : ' invalid' : '')}>
         <Flex className="card-back"></Flex>
         <Flex
           className={'card-front type-'+card.type}
@@ -69,7 +72,7 @@ function Card({card, x, y, task=()=>{}, flipped=false, clickable, valid, showCos
   </>
 }
 
-function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progress}) {
+function GameView({exercise, finishGame, cards, setCards, bpmnToSpawn, setBpmnToSpawn, deck, setDeck, progress}) {
   const settingsPerTurn = {
     bpmn: 2,
     action: 2,
@@ -94,16 +97,36 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
 
   useEffect(() => {
     // Test
-    console.log(deck.slice(deck.length-waste, deck.length))
+    // console.log(deck.slice(deck.length-waste, deck.length))
     // Win scenario
     if(progress>=100) setModal(
-      {text: 'Game finished!', confirmText: 'See results', confirm: finishGame}
+      {
+        // title: 'Game finished!',
+        text: <>
+          <Title order={3}>Game finished!</Title>
+          <b>Results:</b>
+          You collected all the BPMN elements! (100%)
+        </>,
+        confirmText: 'Edit BPMN diagram',
+        confirm: finishGame
+      }
     )
     // Next turn when buys finish
     if(buys==0) {
       // Modal shows during game
       if(turn>=totalTurns) setModal(
-        {text: 'Game finished!', confirmText: 'See results', confirm: finishGame}
+        {
+          // title: 'Game finished!',
+          text: <>
+            <Title order={3}>Game finished!</Title>
+            <b>Results:</b>
+            You collected <b>{deck.filter(c => c.type=='bpmn').length}</b> BPMN elements
+            out of <b>{deck.filter(c => c.type=='bpmn').length+cards.bpmn.length}</b>
+            {' '}({Math.round(progress)}%)
+          </>,
+          confirmText: 'Edit BPMN diagram',
+          confirm: finishGame
+        }
       )
       else setModal(
         {text: 'Next turn!', confirmText: 'Go!', confirm: () => setTurn(turn+1)}
@@ -178,7 +201,7 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
         <Text>&nbsp;+N 🛒<br/>Add N buys in a turn</Text>
         <Text>&nbsp;+N ✋🏻<br/>Add N turns</Text>
       </Flex>
-      {/* <button onClick={() => setTurn(totalTurns-2)}>cheat!</button> */}
+      <button onClick={() => setTurn(totalTurns-1)}>cheat!</button>
       <Button
         color="green" variant="default" w="170" m="10"
         onClick={() => setBuys(0)}
@@ -200,9 +223,10 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
           setBuys(buys-1)
         }}
       />)}
-      {cards.bpmn.slice(0, settingsPerTurn.bpmn).map((c, k) => <Card
+      {cards.bpmn.slice(0, settingsPerTurn.bpmn).map((c, k) => <Tooltip
+        key={k} label="Click to preview" position="bottom"
+      ><Card
         // Carte bpmn da comprare
-        key={k}
         card={c}
         x={GRID.X1+k*GRID.DIST}
         y={GRID.Y1}
@@ -214,6 +238,7 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
             text: <BpmnViewer bpmn={c.bpmn}/>,
             confirmText: 'Buy card',
             confirm: () => {
+              setBpmnToSpawn(c.bpmn)
               setDeck((deck) => [...deck, {...c, x: GRID.X1+k*GRID.DIST, y: GRID.Y1, flipped: false}])
               setTimeout(() => {
                 setDeck((deck) => deck.toSpliced(-1, 1, {...c, x: undefined, y: undefined, flipped: undefined}))
@@ -225,7 +250,7 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
             disabled: selCoins<c.cost
           })
         }}
-      />)}
+      /></Tooltip>)}
       {cards.action.slice(0, settingsPerTurn.action).map((c, k) => <Card
         // Carte action da comprare
         key={k}
@@ -315,7 +340,6 @@ function GameView({exercise, finishGame, cards, setCards, deck, setDeck, progres
 }
 
 function ModalGameAlert({opened, title='', text, confirmText, confirm, cancel, disabled, hideConfirm}) {
-  console.log(cancel)
   return <Modal
     opened={opened}
     onClose={cancel || (() => {})}
@@ -370,6 +394,65 @@ function ProgressPanel({logged, exercise, cards, deck, progress=0}) {
   </>
 }
 
+function GameModeler({bpmnToSpawn, setBpmnToSpawn, w='100%', h='500'}) {
+  const containerRef = useRef(null)
+  const modelerRef = useRef(null)
+  
+  const init = async () => {
+    await modelerRef.current?.importXML(emptyBpmnXml)
+    const canvas = modelerRef.current.get('canvas')
+    canvas.zoom('fit-viewport')
+  }
+
+  const spawn = async () => {
+    console.log(bpmnToSpawn)
+    if(bpmnToSpawn) {
+      const tempModeler = new Modeler()
+      await tempModeler.importXML(bpmnToSpawn)
+      const tempElementRegistry = tempModeler.get('elementRegistry')
+      const tempCP = tempModeler.get('copyPaste')
+      const tempClip = tempModeler.get('clipboard')
+      const mainCP = modelerRef.current.get('copyPaste')
+      const mainClip = modelerRef.current.get('clipboard')
+      const elementsToSpawn = tempElementRegistry.filter(
+        e => e.type!=='bpmn:Process' && e.type!=='bpmn:Collaboration' && !e.labelTarget
+      )
+      if(elementsToSpawn.length==0) { return }
+      tempCP.copy(elementsToSpawn)
+      mainClip.set(tempClip.get())
+      mainCP.paste({
+        element: modelerRef.current.get('canvas').getRootElement(),
+        point: {
+          x: 300,
+          y: 100+Math.floor(Math.random()*400)
+        },
+      })
+      tempModeler.destroy()
+    }
+  }
+
+  useEffect(() => { spawn() }, [bpmnToSpawn])
+  
+  useEffect(() => {
+    modelerRef.current = new Modeler({container: containerRef.current})
+    init()
+    return () => {
+      if(modelerRef.current) modelerRef.current.destroy()
+    }
+  }, [])
+  
+  return <Flex direction="column" w={w} h={h} justify="center" align="center">
+    <div
+      ref={containerRef}
+      style={{ 
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#CDF'
+      }}
+    />
+  </Flex>
+}
+
 function Gameboard({logged}) {
   const [exercise, setExercise] = useState({})
   const [cards, setCards] = useState([])
@@ -377,7 +460,8 @@ function Gameboard({logged}) {
   const [progress, setProgress] = useState(0)
   const [page, setPage] = useState('loading')
   const [collapsed, setCollapsed] = useState(-1)
-  const ex_id = useParams().id
+  const [bpmnToSpawn, setBpmnToSpawn] = useState('')
+  const {ex_id} = useParams()
 
   const loadExercise = async () => {
     // Exercise and page status
@@ -439,6 +523,7 @@ function Gameboard({logged}) {
               <GameView
                 exercise={exercise} finishGame={() => setPage('finished')}
                 cards={cards} setCards={setCards}
+                bpmnToSpawn={bpmnToSpawn} setBpmnToSpawn={setBpmnToSpawn}
                 deck={deck} setDeck={setDeck}
                 progress={progress}
               />
@@ -452,7 +537,10 @@ function Gameboard({logged}) {
           </Flex>
         </Splitter.Pane>
         <Splitter.Pane defaultSize={30} min={10} collapsible>
-          <BpmnModeler w="100%" h="100%"/>
+          <GameModeler
+            w="100%" h="100%"
+            bpmnToSpawn={bpmnToSpawn} setBpmnToSpawn={setBpmnToSpawn}
+          />
         </Splitter.Pane>
       </Splitter>
     </>}
@@ -460,7 +548,7 @@ function Gameboard({logged}) {
 }
 
 function Results({logged, reload, progress, cards, deck}) {
-  const {id} = useParams()
+  const {ex_id} = useParams()
   return <Flex w="100%" h="70%" justify="space-evenly" align="center" direction="column">
     <Title>Results</Title>
     <Title order={3}>
@@ -472,10 +560,10 @@ function Results({logged, reload, progress, cards, deck}) {
       <Link to="/home">
         <Button color="green" size="lg">Choose another exercise</Button>
       </Link>
-      <Link to={'/play/'+id}>
+      <Link to={'/play/'+ex_id}>
         <Button color="green" size="lg" onClick={reload}>Try again</Button>
       </Link>
-      {logged && <Link to={'/edit/'+id}>
+      {logged && <Link to={'/edit/'+ex_id}>
         <Button color="green" size="lg">Edit exercise</Button>
       </Link>}
     </Flex>
