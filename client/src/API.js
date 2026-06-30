@@ -93,39 +93,11 @@ API.editCard = async (card) => {
 }
 
 API.deleteCard = async (id) => {
-    return await del('/api/card/all/'+id)
+    return await del('/api/card/'+id)
 }
 
 API.deleteExerciseCards = async (ex_id) => {
-    return await del('/api/cards/all/'+ex_id)
-}
-
-
-
-// BLOCKS (API)
-
-API.getBlocks = async () => {
-    return await get('/api/blocks')
-}
-
-API.getCardBlocks = async (c_id) => {
-    return await get('/api/blocks/'+c_id)
-}
-
-API.getBlock = async (id) => {
-    return await get('/api/block/'+id)
-}
-
-API.createBlock = async (block) => {
-    return await post('/api/block', block)
-}
-
-API.editBlock = async (block) => {
-    return await put('/api/block/'+block.id, block)
-}
-
-API.deleteBlock = async (id) => {
-    return await del('/api/block/'+id)
+    return await del('/api/cards/'+ex_id)
 }
 
 
@@ -196,7 +168,7 @@ API.logout = async () => {
 }
 
 API.getUserInfo = async () => {
-    const res = await fetch(BASE_URL+'/api/sessions/current', { credentials: 'include' })
+    const res = await fetch(BASE_URL+'/api/sessions/current', {credentials: 'include'})
     const userInfo = await res.json()
     if(res.ok) {
         return userInfo
@@ -206,7 +178,7 @@ API.getUserInfo = async () => {
 }
 
 API.getUserAuth = async () => {
-    const res = await fetch(BASE_URL+'/api/sessions/current', { credentials: 'include' })
+    const res = await fetch(BASE_URL+'/api/sessions/current', {credentials: 'include'})
     const userInfo = await res.json()
     if(res.ok) return true
     else if(res.status==404) return false

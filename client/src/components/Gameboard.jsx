@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, Navigate, useParams } from 'react-router'
 import {
-  Flex, Box, Space, Modal, Button, Title, Text, Splitter,
-  Loader, Progress, RingProgress, List, ColorSwatch,
-  Tooltip
+  Flex, Box, Space, Modal, Button, Title, Text, TextInput, List,
+  Splitter, Loader, Progress, RingProgress, ColorSwatch, Tooltip
 } from '@mantine/core'
 import { Carousel } from '@mantine/carousel'
 import '@mantine/core/styles.css'
@@ -225,7 +224,7 @@ function GameView({exercise, finishGame, cards, setCards, bpmnToSpawn, setBpmnTo
         <Text>&nbsp;+N 🛒<br/>Add N buys in a turn</Text>
         <Text>&nbsp;+N ✋🏻<br/>Add N turns</Text>
       </Flex>
-      <button onClick={() => setTurn(totalTurns-1)}>cheat!</button>
+      {/* <button onClick={() => setTurn(totalTurns-1)}>cheat!</button> */}
       <Button
         color="green" variant="default" w="170" m="10"
         onClick={() => setBuys(0)}
@@ -418,10 +417,11 @@ function ProgressPanel({logged, exercise, cards, deck, progress=0}) {
   </>
 }
 
-function GameModeler({ex_id, page, bpmnToSpawn, setBpmnToSpawn, w='100%', h='500'}) {
+function GameModeler({ex_id, page, deck, bpmnToSpawn, setBpmnToSpawn, w='100%', h='500'}) {
   const containerRef = useRef(null)
   const modelerRef = useRef(null)
   const [resultId, setResultId] = useState(null)
+  const [player, setPlayer] = useState('')
   
   const init = async () => {
     await modelerRef.current?.importXML(emptyBpmnXml)
@@ -431,12 +431,12 @@ function GameModeler({ex_id, page, bpmnToSpawn, setBpmnToSpawn, w='100%', h='500
 
   const save = async () => {
     const {xml} = await modelerRef.current.saveXML({format: false})
-    const res_id = await API.createResult({ex_id, bpmn: xml})
+    const score = deck.filter(c => c.type=='bpmn').map(c => c.score).reduce((sum, n) => sum+n, 0)
+    const res_id = await API.createResult({ex_id, bpmn: xml, score, player})
     setResultId(res_id)
   }
 
   const spawn = async () => {
-    console.log(bpmnToSpawn)
     if(bpmnToSpawn) {
       const tempModeler = new Modeler()
       await tempModeler.importXML(bpmnToSpawn)
@@ -458,6 +458,7 @@ function GameModeler({ex_id, page, bpmnToSpawn, setBpmnToSpawn, w='100%', h='500
           y: 100+Math.floor(Math.random()*400)
         },
       })
+      setBpmnToSpawn('')
       tempModeler.destroy()
     }
   }
@@ -481,8 +482,16 @@ function GameModeler({ex_id, page, bpmnToSpawn, setBpmnToSpawn, w='100%', h='500
         backgroundColor: '#CDF'
       }}
     />
-    {page=='finished' && <Flex>
-      <Button color="green" m="10" onClick={save}>
+    {page=='finished' && <Flex p="10" gap="xl" w="50%" align="end">
+      <TextInput
+        // label="Player name"
+        placeholder="Optional: insert your name"
+        w="100%"
+        leftSection={<Icon.User color="grey"/>}
+        variant="filled"
+        onChange={(ev) => setPlayer(ev.target.value)}
+      />
+      <Button color="green" onClick={save}>
         Confirm and check solution
       </Button>
     </Flex>}
@@ -553,18 +562,19 @@ function Gameboard({logged}) {
         h="92%"
         shiftStep={5}
         handleColor={collapsed>=0 ? ['#090','orange'][collapsed] : '#006'}
-        lineSize={15}
+        withHandle={page!='finished'}
+        lineSize={page=='finished' ? 0 : 15}
         onCollapseChange={(index, collapsed) => setCollapsed(collapsed ? index : -1)}
         sizes={panesSizes}
         onSizeChange={setPanesSizes}
       >
-        {page!='finished' && <Splitter.Pane defaultSize={70} min={70} collapsible>
+        <Splitter.Pane defaultSize={70} min={70} collapsible>
           <Flex h="100%">
             <Box w={GRID.SEP+'%'}>
               <GameView
                 exercise={exercise} finishGame={() => {
                   setPage('finished')
-                  setPanesSizes([100]) //([20, 80])
+                  setPanesSizes([0, 100]) //([20, 80])
                 }}
                 cards={cards} setCards={setCards}
                 bpmnToSpawn={bpmnToSpawn} setBpmnToSpawn={setBpmnToSpawn}
@@ -579,7 +589,7 @@ function Gameboard({logged}) {
               />
             </Box>
           </Flex>
-        </Splitter.Pane>}
+        </Splitter.Pane>
         {/* {page=='finished' && <Splitter.Pane defaultSize={20} min={20}>
           <Results
             logged={logged} reload={() => {
@@ -589,9 +599,9 @@ function Gameboard({logged}) {
             progress={progress} cards={cards} deck={deck}
           />
         </Splitter.Pane>} */}
-        <Splitter.Pane defaultSize={30} min={page=='finished' ? 70 : 10} collapsible={page!='finished'}>
+        <Splitter.Pane defaultSize={30} min={page=='finished' ? 100 : 10} collapsible={page!='finished'}>
           <GameModeler
-            w="100%" h="100%" ex_id={ex_id} page={page}
+            w="100%" h="100%" ex_id={ex_id} page={page} deck={deck}
             bpmnToSpawn={bpmnToSpawn} setBpmnToSpawn={setBpmnToSpawn}
           />
         </Splitter.Pane>

@@ -56,7 +56,9 @@ const db = new sqlite.Database('db.sqlite', (err) => {
                 CREATE TABLE IF NOT EXISTS results(
                     id INTEGER PRIMARY KEY,
                     ex_id INTEGER NOT NULL,
-                    bpmn TEXT NOT NULL
+                    bpmn TEXT NOT NULL,
+                    score NUMBER NOT NULL,
+                    player TEXT DEFAULT ''
                 )
             `, catchError)
         })
@@ -280,101 +282,6 @@ exports.deleteExerciseCards = (ex_id) => {
 
 
 
-// BLOCKS (DAO)
-
-exports.listBlocks = () => {
-    return new Promise((resolve, reject) => {
-        const sql = "SELECT * FROM blocks"
-        db.all(sql, [], (err, rows) => {
-            if(err) {
-                reject(err)
-                return
-            }
-            resolve(rows)
-        })
-    })
-}
-
-exports.listCardBlocks = (c_id) => {
-    return new Promise((resolve, reject) => {
-        const sql = "SELECT * FROM blocks WHERE c_id=?"
-        db.all(sql, [c_id], (err, rows) => {
-            if(err) {
-                reject(err)
-                return
-            }
-            resolve(rows)
-        })
-    })
-}
-
-exports.getBlock = (id) => {
-    return new Promise((resolve, reject) => {
-        const sql = "SELECT * FROM blocks WHERE id=?"
-        db.get(sql, [id], (err, row) => {
-            if(err) {
-                reject(err)
-                return
-            }
-            resolve(row)
-        })
-    })
-}
-
-exports.addBlock = (block) => {
-    return new Promise((resolve, reject) => {
-        const sql = "INSERT INTO blocks(c_id,type,text) VALUES(?,?,?)"
-        db.run(sql, [block.c_id, block.type, block.text], function (err) {
-            if(err) {
-                reject(err)
-                return
-            }
-            resolve(this.lastID)
-        })
-    })
-}
-
-exports.editBlock = (block) => {
-    return new Promise((resolve, reject) => {
-        const sql = "UPDATE blocks SET type=?,text=? WHERE id=?"
-        db.run(sql, [block.type, block.text, block.id], (err) => {
-            if(err) {
-                reject(err)
-                return
-            }
-            resolve()
-        })
-    })
-}
-
-exports.deleteBlock = (id) => {
-    return new Promise((resolve, reject) => {
-        const sql = "DELETE FROM blocks WHERE id=?"
-        db.run(sql, [id], (err) => {
-            if(err) {
-                reject(err)
-                return
-            }
-            resolve()
-        })
-    })
-}
-
-exports.deleteCardBlocks = (c_id) => {
-    return new Promise((resolve, reject) => {
-        const sql = "DELETE FROM blocks WHERE c_id=?"
-        db.run(sql, [c_id], (err) => {
-            if(err) {
-                reject(err)
-                return
-            }
-            resolve()
-        })
-    })
-}
-
-
-
 // RESULTS (DAO)
 
 exports.listResults = () => {
@@ -418,8 +325,8 @@ exports.getResult = (id) => {
 
 exports.addResult = (res) => {
     return new Promise((resolve, reject) => {
-        const sql = "INSERT INTO results(ex_id,bpmn) VALUES(?,?)"
-        db.run(sql, [res.ex_id, res.bpmn], function (err) {
+        const sql = "INSERT INTO results(ex_id,bpmn,score,player) VALUES(?,?,?,?)"
+        db.run(sql, [res.ex_id, res.bpmn, res.score, res.player], function (err) {
             if(err) {
                 reject(err)
                 return
@@ -431,8 +338,8 @@ exports.addResult = (res) => {
 
 exports.editResult = (res) => {
     return new Promise((resolve, reject) => {
-        const sql = "UPDATE results SET ex_id=?,bpmn=? WHERE id=?"
-        db.run(sql, [res.ex_id, res.bpmn, res.id], (err) => {
+        const sql = "UPDATE results SET ex_id=?,bpmn=?,score=?,player=? WHERE id=?"
+        db.run(sql, [res.ex_id, res.bpmn, res.score, res.id, res.player], (err) => {
             if(err) {
                 reject(err)
                 return

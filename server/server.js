@@ -270,112 +270,11 @@ app.delete('/api/card/:id', async (req, res) => {
     }
 })
 
-app.delete('/api/card/all/:id', async (req, res) => {
-    try {
-        await dao.deleteCardBlocks(req.params.id)
-        await dao.deleteCard(req.params.id)
-        console.log('Deletes done.')
-        res.status(200).send('Card + blocks deleted from db.')
-    } catch(err) {
-        res.status(503).json(err)
-    }
-})
-
 app.delete('/api/cards/:ex_id', async (req, res) => {
     try {
         await dao.deleteExerciseCards(req.params.ex_id)
         console.log('Deletes done.')
         res.status(200).send('Cards deleted from db.')
-    } catch(err) {
-        res.status(503).json(err)
-    }
-})
-
-app.delete('/api/cards/all/:ex_id', async (req, res) => {
-    try {
-        await Promise.all(
-            (await dao.listExerciseCards(req.params.ex_id))
-            .map(c => dao.deleteCardBlocks(c.id))
-        )
-        await dao.deleteExerciseCards(req.params.ex_id)
-        console.log('Deletes done.')
-        res.status(200).send('Cards + blocks deleted from db.')
-    } catch(err) {
-        res.status(503).json(err)
-    }
-})
-
-
-
-// BLOCKS
-
-app.get('/api/blocks', async (req, res) => {
-    try {
-        const blocks = await dao.listBlocks()
-        console.log(blocks)
-        res.status(200).json(blocks)
-    } catch(err) {
-        res.status(503).json(err)
-    }
-})
-
-app.get('/api/blocks/:c_id', async (req, res) => {
-    try {
-        const blocks = await dao.listCardBlocks(req.params.c_id)
-        console.log(blocks)
-        res.status(200).json(blocks)
-    } catch(err) {
-        res.status(503).json(err)
-    }
-})
-
-app.get('/api/block/:id', async (req, res) => {
-    try {
-        const block = await dao.getBlock(req.params.id)
-        console.log(block)
-        if(!block) res.status(404).end()
-        else res.status(200).json(block)
-    } catch(err) {
-        res.status(503).json(err)
-    }
-})
-
-app.post('/api/block', async (req, res) => {
-    try {
-        const id = await dao.addBlock(req.body)
-        await dao.editBlock({...req.body, id})
-        console.log('Insertion done.')
-        res.status(200).send(id)
-    } catch(err) {
-        res.status(503).json(err)
-    }
-})
-
-app.put('/api/block/:id', async (req, res) => {
-    try {
-        await dao.editBlock({...req.body, id: req.params.id})
-        console.log('Update done.')
-        res.status(200).send('Block updated in db.')
-    } catch(err) {
-        res.status(503).json(err)
-    }
-})
-
-app.delete('/api/block/:id', async (req, res) => {
-    try {
-        await dao.deleteBlock(req.params.id)
-        console.log('Delete done.')
-        res.status(200).send('Block deleted from db.')
-    } catch(err) {
-        res.status(503).json(err)
-    }
-})
-
-app.delete('/api/blocks/:c_id', async (req, res) => {
-    try {
-        await dao.deleteCardBlocks(req.params.c_id)
-        console.log('Deletes done.')
-        res.status(200).send('Blocks deleted from db.')
     } catch(err) {
         res.status(503).json(err)
     }

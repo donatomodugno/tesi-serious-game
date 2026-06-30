@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, Navigate, useParams } from 'react-router'
-import { Flex, Table, ScrollArea, Button, Title } from '@mantine/core'
+import { Flex, Table, ScrollArea, Button, Title, Text } from '@mantine/core'
 import { BpmnViewer } from './'
 import { BpmnModdle } from 'bpmn-moddle'
 import { diff } from 'bpmn-js-differ'
@@ -23,10 +23,6 @@ function DiffList({ex, res, logged, w='50%'}) {
     const def_res = (await moddle.fromXML(res.bpmn)).rootElement
     const diffs = diff(def_ex, def_res)
     setChanges(diffs)
-    // Object.values(diffs._changed).map(() => setScore(score => score-1))
-    // Object.values(diffs._removed).map(() => setScore(score => score-1.5))
-    // Object.values(diffs._layoutChanged).map(() => {})
-    // Object.values(diffs._added).map(() => setScore(score => score-0.5))
     let temp_score = score
     Object.values(diffs._changed).map(() => temp_score -= 1)
     Object.values(diffs._removed).map(() => temp_score -= 1.5)
@@ -76,7 +72,8 @@ function DiffList({ex, res, logged, w='50%'}) {
         </Table.Tbody>
       </Table>
     </ScrollArea>
-    <Flex p="10" direction="column" h="30%" gap="md" justify="center" align="center">
+    <Flex direction="column" h="30%" gap={2} justify="space-evenly" align="center" style={{borderTop:'1px solid grey'}}>
+      <div>Player: <b>{res.player}</b></div>
       <Title order={3}>Total score: {score}</Title>
       <Flex gap="md">
         <Link to="/home">
@@ -116,7 +113,11 @@ function Results({logged}) {
     {page=='invalid' && <Navigate to="/"/>}
     {page=='loaded' && <Flex w="100%" h="92%">
       <DiffList w="30%" ex={exercise} res={result} logged={logged}/>
-      <DiffView w="70%" bpmn_ex={exercise.bpmn} bpmn_res={result.bpmn}/>
+      <Flex w="2%" style={{borderLeft:'1px solid grey'}} direction="column" justify="space-around">
+        <Text style={{rotate:'-90deg'}}>Exercise&nbsp;solution</Text>
+        <Text style={{rotate:'-90deg'}}>Your&nbsp;solution</Text>
+      </Flex>
+      <DiffView w="68%" bpmn_ex={exercise.bpmn} bpmn_res={result.bpmn}/>
     </Flex>}
   </>
 }
