@@ -130,6 +130,39 @@ API.deleteBlock = async (id) => {
 
 
 
+// RESULTS (API)
+
+API.getResults = async () => {
+    return await get('/api/results')
+}
+
+API.getExerciseResults = async (ex_id) => {
+    return await get('/api/results/'+ex_id)
+}
+
+API.getResult = async (id) => {
+    const res = await get('/api/result/'+id)
+    return res.status==404 ? null : res
+}
+
+API.createResult = async (res) => {
+    return await post('/api/result', res)
+}
+
+API.editResult = async (res) => {
+    return await put('/api/result/'+res.id, res)
+}
+
+API.deleteResult = async (id) => {
+    return await del('/api/result/'+id)
+}
+
+API.deleteExerciseResults = async (ex_id) => {
+    return await del('/api/results/'+ex_id)
+}
+
+
+
 // USER (API)
 
 API.getUserById = async (id) => {

@@ -5,6 +5,7 @@ import {
   Loader, Progress, RingProgress, List, ColorSwatch,
   Tooltip
 } from '@mantine/core'
+import { Carousel } from '@mantine/carousel'
 import '@mantine/core/styles.css'
 import './Gameboard.css'
 import { Icon } from '../icons'
@@ -33,6 +34,29 @@ function shuffle(arr) {
     [arr[icurr], arr[irand]] = [arr[irand], arr[icurr]]
   }
   return arr
+}
+
+function Tutorial({}) {
+  const [opened, setOpened] = useState(true)
+
+  return <Modal opened={opened} withCloseButton={false} onClose={() => {}}>
+    <Flex direction="column" gap="lg">
+      <Carousel
+        withIndicators
+        withControls
+        height={300}
+        slideGap="md"
+        controlsOffset="sm"
+      >
+        <Carousel.Slide bg="red">1</Carousel.Slide>
+        <Carousel.Slide bg="yellow">2</Carousel.Slide>
+        <Carousel.Slide bg="blue">3</Carousel.Slide>
+      </Carousel>
+      <Flex justify="space-around">
+        <Button onClick={() => setOpened(false)} color="green">Skip tutorial</Button>
+      </Flex>
+    </Flex>
+  </Modal>
 }
 
 function Card({ref, card, x, y, task=()=>{}, flipped=false, clickable, valid, showCost=true}) {
@@ -394,14 +418,21 @@ function ProgressPanel({logged, exercise, cards, deck, progress=0}) {
   </>
 }
 
-function GameModeler({bpmnToSpawn, setBpmnToSpawn, w='100%', h='500'}) {
+function GameModeler({ex_id, page, bpmnToSpawn, setBpmnToSpawn, w='100%', h='500'}) {
   const containerRef = useRef(null)
   const modelerRef = useRef(null)
+  const [resultId, setResultId] = useState(null)
   
   const init = async () => {
     await modelerRef.current?.importXML(emptyBpmnXml)
     const canvas = modelerRef.current.get('canvas')
     canvas.zoom('fit-viewport')
+  }
+
+  const save = async () => {
+    const {xml} = await modelerRef.current.saveXML({format: false})
+    const res_id = await API.createResult({ex_id, bpmn: xml})
+    setResultId(res_id)
   }
 
   const spawn = async () => {
@@ -450,6 +481,12 @@ function GameModeler({bpmnToSpawn, setBpmnToSpawn, w='100%', h='500'}) {
         backgroundColor: '#CDF'
       }}
     />
+    {page=='finished' && <Flex>
+      <Button color="green" m="10" onClick={save}>
+        Confirm and check solution
+      </Button>
+    </Flex>}
+    {resultId && <Navigate to={'/play/'+ex_id+'/results/'+resultId}/>}
   </Flex>
 }
 
@@ -460,6 +497,7 @@ function Gameboard({logged}) {
   const [progress, setProgress] = useState(0)
   const [page, setPage] = useState('loading')
   const [collapsed, setCollapsed] = useState(-1)
+  const [panesSizes, setPanesSizes] = useState([70, 30])
   const [bpmnToSpawn, setBpmnToSpawn] = useState('')
   const {ex_id} = useParams()
 
@@ -497,31 +535,37 @@ function Gameboard({logged}) {
   return <>
     {page=='invalid' && <Navigate to="/"/>}
     {/* {page=='finished' && <Navigate to={'/play/'+ex_id+'/results'}/>} */}
-    {page=='finished' && <Results
+    {/* {page=='finished' && <Results
       logged={logged} reload={() => {
         setPage('loading')
         loadExercise()
       }}
       progress={progress} cards={cards} deck={deck}
-    />}
+    />} */}
     {page=='loading' && <>
       <Flex w="100%" h="100%" justify="center" align="center">
         <Loader color="green" size="xl"/>
       </Flex>
     </>}
-    {page=='loaded' && <>
+    {(page=='loaded' || page=='finished') && <>
+      <Tutorial/>
       <Splitter
         h="92%"
         shiftStep={5}
         handleColor={collapsed>=0 ? ['#090','orange'][collapsed] : '#006'}
         lineSize={15}
         onCollapseChange={(index, collapsed) => setCollapsed(collapsed ? index : -1)}
+        sizes={panesSizes}
+        onSizeChange={setPanesSizes}
       >
-        <Splitter.Pane defaultSize={70} min={70} collapsible>
+        {page!='finished' && <Splitter.Pane defaultSize={70} min={70} collapsible>
           <Flex h="100%">
             <Box w={GRID.SEP+'%'}>
               <GameView
-                exercise={exercise} finishGame={() => setPage('finished')}
+                exercise={exercise} finishGame={() => {
+                  setPage('finished')
+                  setPanesSizes([100]) //([20, 80])
+                }}
                 cards={cards} setCards={setCards}
                 bpmnToSpawn={bpmnToSpawn} setBpmnToSpawn={setBpmnToSpawn}
                 deck={deck} setDeck={setDeck}
@@ -535,10 +579,19 @@ function Gameboard({logged}) {
               />
             </Box>
           </Flex>
-        </Splitter.Pane>
-        <Splitter.Pane defaultSize={30} min={10} collapsible>
+        </Splitter.Pane>}
+        {/* {page=='finished' && <Splitter.Pane defaultSize={20} min={20}>
+          <Results
+            logged={logged} reload={() => {
+              setPage('loading')
+              loadExercise()
+            }}
+            progress={progress} cards={cards} deck={deck}
+          />
+        </Splitter.Pane>} */}
+        <Splitter.Pane defaultSize={30} min={page=='finished' ? 70 : 10} collapsible={page!='finished'}>
           <GameModeler
-            w="100%" h="100%"
+            w="100%" h="100%" ex_id={ex_id} page={page}
             bpmnToSpawn={bpmnToSpawn} setBpmnToSpawn={setBpmnToSpawn}
           />
         </Splitter.Pane>
@@ -549,24 +602,23 @@ function Gameboard({logged}) {
 
 function Results({logged, reload, progress, cards, deck}) {
   const {ex_id} = useParams()
-  return <Flex w="100%" h="70%" justify="space-evenly" align="center" direction="column">
+  return <Flex w="100%" h="70%" justify="center" align="center" direction="column" gap="md">
     <Title>Results</Title>
-    <Title order={3}>
+    <Title order={3} ta="center">
       You collected {deck.filter(c => c.type=='bpmn').length} BPMN elements
       out of {deck.filter(c => c.type=='bpmn').length+cards.bpmn.length}
       {' '}({Math.round(progress)}%)
     </Title>
-    <Flex gap="md">
-      <Link to="/home">
-        <Button color="green" size="lg">Choose another exercise</Button>
-      </Link>
-      <Link to={'/play/'+ex_id}>
-        <Button color="green" size="lg" onClick={reload}>Try again</Button>
-      </Link>
-      {logged && <Link to={'/edit/'+ex_id}>
-        <Button color="green" size="lg">Edit exercise</Button>
-      </Link>}
-    </Flex>
+    {/* <Space/>
+    <Link to="/home">
+      <Button color="green" size="lg">Choose another exercise</Button>
+    </Link>
+    <Link to={'/play/'+ex_id}>
+      <Button color="green" size="lg" onClick={reload}>Try again</Button>
+    </Link>
+    {logged && <Link to={'/edit/'+ex_id}>
+      <Button color="green" size="lg">Edit exercise</Button>
+    </Link>} */}
   </Flex>
 }
 

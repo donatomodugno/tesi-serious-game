@@ -19,7 +19,7 @@ function App() {
           <Route path="/home" element={<Homepage logged={logged}/>}/>
           <Route path="/edit/:ex_id" element={logged ? <Editor/> : <Navigate to="/home"/>}/>
           <Route path="/play/:ex_id" element={<Gameboard logged={logged}/>}/>
-          <Route path="/play/:ex_id/results/:res_id" element={<Results/>}/>
+          <Route path="/play/:ex_id/results/:res_id" element={<Results logged={logged}/>}/>
           {/* <Route path="/viewer" element={<BpmnViewer w="100%" h="100%"/>}/> */}
           {/* <Route path="/modeler" element={<BpmnModeler/>}/> */}
           <Route path="/diff" element={<BpmnDiff/>}/>
