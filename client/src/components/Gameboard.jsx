@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, Navigate, useParams } from 'react-router'
 import {
   Flex, Box, Space, Modal, Button, Title, Text, TextInput, List,
-  Splitter, Loader, Progress, RingProgress, ColorSwatch, Tooltip
+  Splitter, Loader, Progress, RingProgress, ColorSwatch, Tooltip,
+  Image
 } from '@mantine/core'
 import { Carousel } from '@mantine/carousel'
 import '@mantine/core/styles.css'
@@ -17,6 +18,12 @@ const stock_cards = {
   'C1': {type: 'coins', name: '1 🪙', cost: 0, bonus: 1, draws: 0, buys: 0, turns: 0},
   'C2': {type: 'coins', name: '2 🪙', cost: 1, bonus: 2, draws: 0, buys: 0, turns: 0},
   'C3': {type: 'coins', name: '3 🪙', cost: 2, bonus: 3, draws: 0, buys: 0, turns: 0},
+}
+const settingsPerTurn = {
+  bpmn: 2,
+  action: 2,
+  hand: 5,
+  buys: 1,
 }
 const GRID = {
   SEP: 80,
@@ -47,9 +54,23 @@ function Tutorial({}) {
         slideGap="md"
         controlsOffset="sm"
       >
-        <Carousel.Slide bg="red">1</Carousel.Slide>
-        <Carousel.Slide bg="yellow">2</Carousel.Slide>
-        <Carousel.Slide bg="blue">3</Carousel.Slide>
+        <Carousel.Slide bg="lightyellow">
+          <Text ta="center" p="10">Click on coins cards to select them</Text>
+          <Image src="/src/assets/tutorial1.png"/>
+        </Carousel.Slide>
+        <Carousel.Slide bg="lightpink">
+          <Text ta="center" p="10">Buy cards that you think you need</Text>
+          <Image src="/src/assets/tutorial2.png"/>
+        </Carousel.Slide>
+        <Carousel.Slide bg="lightblue">
+          <Text ta="center" p="10">Click on action cards to get the effect immediately</Text>
+          <Image src="/src/assets/tutorial3.png"/>
+        </Carousel.Slide>
+        <Carousel.Slide bg="gold">
+          <Flex h="100%" justify="center" align="center">
+            <Title order={3} ta="center">Good luck!</Title>
+          </Flex>
+        </Carousel.Slide>
       </Carousel>
       <Flex justify="space-around">
         <Button onClick={() => setOpened(false)} color="green">Skip tutorial</Button>
@@ -96,12 +117,6 @@ function Card({ref, card, x, y, task=()=>{}, flipped=false, clickable, valid, sh
 }
 
 function GameView({exercise, finishGame, cards, setCards, bpmnToSpawn, setBpmnToSpawn, deck, setDeck, progress}) {
-  const settingsPerTurn = {
-    bpmn: 2,
-    action: 2,
-    hand: 5,
-    buys: 1,
-  }
   const [avCoins, setAvCoins] = useState(0)
   const [selCoins, setSelCoins] = useState(0)
   const [buys, setBuys] = useState(settingsPerTurn.buys)
@@ -526,7 +541,7 @@ function Gameboard({logged}) {
     setCards(loaded_cards)
     setDeck([
       ...Array(7).fill(stock_cards['C1']),
-      ...loaded_cards.action.splice(0, Math.min(loaded_cards.action.length, 3))
+      // ...loaded_cards.action.splice(0, Math.min(loaded_cards.action.length, 3))
     ])
   }
   

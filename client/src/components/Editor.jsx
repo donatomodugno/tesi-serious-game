@@ -19,29 +19,6 @@ import API from '../API'
 
 const panels = ['20%', '40%', '20%']
 const new_card = {name: 'Card', type: 'bpmn', cost: 1, score: 0, bonus: 0, draws: 0, buys: 0, turns: 0, bpmn: ''}
-const new_block = {type: 'task', text: 'New block'}
-const block_types_groups = [
-  {group: 'Tasks', children: [
-    {value: 'task', label: <Flex align="center" gap="xs">{bpmn_icon.Task} Task</Flex>},
-    {value: 'task-m', label: <Flex align="center" gap="xs">{bpmn_icon.Manual} Manual task</Flex>},
-    {value: 'task-u', label: <Flex align="center" gap="xs">{bpmn_icon.User} User task</Flex>},
-    {value: 'task-s', label: <Flex align="center" gap="xs">{bpmn_icon.Service} Service task</Flex>},
-  ]},
-  {group: 'Gateways', children: [
-    {value: 'gw-and', label: <Flex align="center" gap="xs">{bpmn_icon.And} Parallel gateway</Flex>},
-    {value: 'gw-or', label: <Flex align="center" gap="xs">{bpmn_icon.Or} Inclusive gateway</Flex>},
-    {value: 'gw-xor', label: <Flex align="center" gap="xs">{bpmn_icon.Xor} Exclusive gateway</Flex>},
-  ]},
-  {group: 'Events', children: [
-    {value: 'ev-msg-s', label: <Flex align="center" gap="xs">{bpmn_icon.MsgSend} Send message</Flex>},
-    {value: 'ev-msg-r', label: <Flex align="center" gap="xs">{bpmn_icon.MsgRecv} Receive message</Flex>},
-    {value: 'ev-timer', label: <Flex align="center" gap="xs">{bpmn_icon.Timer} Timer/Delay</Flex>},
-  ]},
-  {group: 'Pools', children: [
-    {value: 'pool', label: <Flex align="center" gap="xs">{bpmn_icon.Pool} Pool</Flex>},
-    {value: 'lane', label: <Flex align="center" gap="xs">{bpmn_icon.Lane} Lane</Flex>},
-  ]},
-]
 
 function ModalDelete({opened, close, confirm, title, text, variant='light'}) {
   return <Modal
@@ -229,22 +206,7 @@ function PreviewBPMNElements({cards, activeCard}) {
 
 function CardEditPanel({cards, setCards, activeCard, setActiveCard, saveCard}) {
   const c_id = cards[activeCard]?.id
-  const [blocks, setBlocks] = useState([])
   const [opened, setOpened] = useState(false)
-
-  const loadBlocks = async () => {
-    setBlocks(await API.getCardBlocks(cards[activeCard].id))
-  }
-
-  const addBlock = async () => {
-    await API.createBlock({...new_block, c_id})
-    setBlocks([...blocks, new_block])
-  }
-
-  useEffect(() => {
-    if(activeCard>=0 && activeCard<cards.length)
-      loadBlocks()
-  }, [activeCard])
   
   const handleTitleChange = ({currentTarget: {value}}) => {
     setCards(cards.toSpliced(activeCard, 1, {...cards[activeCard], name: value}))
@@ -689,7 +651,6 @@ function Editor({}) {
 
   const createCard = async () => {
     const c_id = await API.createCard({...new_card, ex_id})
-    await API.createBlock({...new_block, c_id})
   }
 
   const saveCard = async () => {

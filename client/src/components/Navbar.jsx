@@ -1,4 +1,4 @@
-import { Flex, Button, Title, Divider, Modal, TextInput, PasswordInput, Text } from '@mantine/core'
+import { Flex, Button, Table, Title, Divider, Modal, TextInput, PasswordInput, Text } from '@mantine/core'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { Icon } from '../icons'
@@ -108,8 +108,48 @@ function ModalLogin({opened, close, login}) {
     </>
 }
 
+function ModalScores({opened, close}) {
+    const [results, setResults] = useState([])
+
+    const load = async () => {
+        setResults(await API.getResults())
+    }
+
+    useEffect(() => { load() }, [opened])
+
+    return <>
+        <Modal
+            opened={opened}
+            onClose={close}
+            transitionProps={{transition: 'slide-down'}}
+            centered
+            size="xl"
+            title="Leaderboard"
+        >
+            <Flex direction="column" gap="md">
+                {results.length>0 ? <>
+                    <Title order={4} ta="center">Top player scores</Title>
+                    <Table>
+                        <Table.Tbody>
+                            <Table.Tr>
+                                <Table.Th>Player</Table.Th>
+                                <Table.Th>Highscore</Table.Th>
+                            </Table.Tr>
+                            {results.map((r, k) => <Table.Tr key={k}>
+                                <Table.Td>{r.player}</Table.Td>
+                                <Table.Td>{r.score}</Table.Td>
+                            </Table.Tr>)}
+                        </Table.Tbody>
+                    </Table>
+                </> : <Title order={4} ta="center">No one played the game yet!</Title>}
+            </Flex>
+        </Modal>
+    </>
+}
+
 function Navbar({logged, setLogged}) {
-    const [modalOpened, setModalOpened] = useState(false)
+    const [modalUserOpened, setModalUserOpened] = useState(false)
+    const [modalScoresOpened, setModalScoresOpened] = useState(false)
 
     const loadAuth = async () => {
         try {
@@ -126,7 +166,7 @@ function Navbar({logged, setLogged}) {
             const username = await API.login(credentials)
             const user = await API.getUserInfo()
             setLogged(true)
-            setModalOpened(false)
+            setModalUserOpened(false)
         } catch(err) {
             console.error(err.error)
         }
@@ -135,7 +175,7 @@ function Navbar({logged, setLogged}) {
     const doLogout = async () => {
         await API.logout()
         setLogged(false)
-        setModalOpened(false)
+        setModalUserOpened(false)
     }
 
     const checkAuth = async () => {
@@ -152,14 +192,18 @@ function Navbar({logged, setLogged}) {
 
     return <>
         <ModalLogin
-            opened={modalOpened && !logged}
-            close={() => setModalOpened(false)}
+            opened={modalUserOpened && !logged}
+            close={() => setModalUserOpened(false)}
             login={doLogin}
         />
         <ModalLogout
-            opened={modalOpened && logged}
-            close={() => setModalOpened(false)}
+            opened={modalUserOpened && logged}
+            close={() => setModalUserOpened(false)}
             logout={doLogout}
+        />
+        <ModalScores
+            opened={modalScoresOpened}
+            close={() => setModalScoresOpened(false)}
         />
         <Flex gap="sm" id="navbar">
             <Link to="/home" id="nav-title">
@@ -169,20 +213,25 @@ function Navbar({logged, setLogged}) {
                 </Flex>
             </Link>
             <Divider orientation="vertical" />
+            <Button
+                variant="filled"
+                color="green"
+                onClick={() => setModalScoresOpened(true)}
+            >Leaderboard</Button>
             {logged ? <Button.Group>
                 <Button variant="light" color="green">Loggedin as tiziocaio</Button>
                 <Button
                     variant="filled"
                     color="green"
                     rightSection={<Icon.Logout color="white"/>}
-                    onClick={() => setModalOpened(true)}
+                    onClick={() => setModalUserOpened(true)}
                 >Logout</Button>
             </Button.Group>
             : <Button
                 variant="filled"
                 color="green"
                 rightSection={<Icon.User color="white"/>}
-                onClick={() => setModalOpened(true)}
+                onClick={() => setModalUserOpened(true)}
             >Login</Button>}
         </Flex>
     </>
